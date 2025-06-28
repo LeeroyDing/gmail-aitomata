@@ -16,8 +16,7 @@
 
 import { Config } from './Config';
 import { Stats } from './Stats';
-import Utils from './utils';
-import { AIAnalyzer, PlanOfAction } from './AIAnalyzer';
+import { AIAnalyzer } from './AIAnalyzer';
 import { TasksManager } from './TasksManager';
 
 // Define the possible inbox actions as a type
@@ -143,5 +142,57 @@ export class Processor {
     if (!allPass) {
       throw new Error('Some threads failed to process. Please check the logs and your inbox for emails with the error label.');
     }
+  }
+
+  public static testProcessing(it: Function, expect: (actual: any) => any) {
+    // Mock dependencies
+    const AIAnalyzer = global.AIAnalyzer;
+    const TasksManager = global.TasksManager;
+    const GmailApp = global.GmailApp;
+    const Logger = global.Logger;
+
+    const mockConfig = {
+        unprocessed_label: 'unprocessed',
+        processed_label: 'processed',
+        processing_failed_label: 'error',
+        max_threads: 50,
+    } as any;
+
+    it('should process a simple thread correctly', () => {
+        // Setup
+        const mockThread = Mocks.getMockThread({
+            getId: () => 'thread-1',
+            getFirstMessageSubject: () => 'Test Subject',
+            getMessages: () => [Mocks.getMockMessage({ getDate: () => new Date() })],
+            removeLabel: jest.fn(),
+            addLabel: jest.fn(),
+            moveToArchive: jest.fn(),
+        });
+        
+        AIAnalyzer.getContext = jest.fn().mockReturnValue('Test Context');
+        TasksManager.findCheckpoint = jest.fn().mockReturnValue(null);
+        const mockPlan = {
+            action: { move_to: 'ARCHIVE', mark_read: true },
+            task: { is_required: false }
+        };
+        AIAnalyzer.generatePlan = jest.fn().mockReturnValue(mockPlan);
+        TasksManager.upsertTask = jest.fn();
+        
+        const unprocessedLabel = { getThreads: () => [mockThread] };
+        GmailApp.getUserLabelByName = jest.fn((name) => {
+            if (name === 'unprocessed') return unprocessedLabel;
+            return { getName: () => name };
+        });
+
+        // Execute
+        Processor.processAllUnprocessedThreads();
+
+        // Verify
+        expect(TasksManager.findCheckpoint).toHaveBeenCalledWith('thread-1', expect.anything());
+        expect(AIAnalyzer.generatePlan).toHaveBeenCalled();
+        expect(TasksManager.upsertTask).not.toHaveBeenCalled();
+        expect(mockThread.moveToArchive).toHaveBeenCalled();
+        expect(mockThread.removeLabel).toHaveBeenCalledWith(unprocessedLabel);
+    });
   }
 }

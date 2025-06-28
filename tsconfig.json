@@ -19,10 +19,16 @@
     "importHelpers": false,
     "strictNullChecks": true,
     "experimentalDecorators": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
-  "exclude": [
-    "build",
-    "node_modules"
+  "files": [
+    "AIAnalyzer.ts",
+    "Config.ts",
+    "index.ts",
+    "Processor.ts",
+    "Stats.ts",
+    "TasksManager.ts",
+    "utils.ts"
   ]
 }

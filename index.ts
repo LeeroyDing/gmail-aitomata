@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-// Polyfills
-
 import {Config} from './Config';
+import {JestExpect, JestIt} from './JestSheets';
 import {Processor} from './Processor';
 import {Stats} from './Stats';
 import Utils from './utils';
+import { AIAnalyzer } from './AIAnalyzer';
+import { TasksManager } from './TasksManager';
+
 
 // String.startsWith polyfill
 if (!String.prototype.startsWith) {
@@ -81,6 +83,7 @@ function ensurePermissionsEstablished() {
 
 // Triggered when Spreadsheet is opened
 // noinspection JSUnusedGlobalSymbols
+// @ts-ignore
 function onOpen(e: { authMode: GoogleAppsScript.Script.AuthMode }) {
     const ui = SpreadsheetApp.getUi();
     const menu = ui.createMenu('Gmail Automata');
@@ -97,17 +100,20 @@ function onOpen(e: { authMode: GoogleAppsScript.Script.AuthMode }) {
 }
 
 // Triggered when time-driven trigger or click via Spreadsheet menu
+// @ts-ignore
 function processEmails() {
     ensurePermissionsEstablished();
     Utils.withFailureEmailed("processEmails", () => Processor.processAllUnprocessedThreads());
 }
 
+// @ts-ignore
 function sanityChecking() {
     Utils.withFailureEmailed("sanityChecking", () => {
         Stats.collapseStatRecords();
     });
 }
 
+// @ts-ignore
 function setupTriggers() {
     ensurePermissionsEstablished();
     cancelTriggers();
@@ -134,13 +140,14 @@ function setupTriggers() {
     });
 }
 
-function cancelTriggers() {
-    Utils.withFailureEmailed("cancelTriggers", () => {
-        ScriptApp.getProjectTriggers().forEach(trigger => {
-            Logger.log(`Deleting trigger ${trigger.getHandlerFunction()}...`);
-            ScriptApp.deleteTrigger(trigger);
-        });
-    });
+// @ts-ignore
+function testAll() {
+    const jestExpect = new JestExpect();
+    const jestIt = new JestIt();
+
+    AIAnalyzer.testAIAnalyzer(jestIt.it, (actual) => jestExpect.expect(actual));
+    TasksManager.testTasksManager(jestIt.it, (actual) => jestExpect.expect(actual));
 }
+
 
 

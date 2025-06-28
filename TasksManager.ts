@@ -29,6 +29,10 @@ export class TasksManager {
    * @returns {string} The ID of the task list.
    */
   private static getTaskListId(config: Config): string {
+    if (typeof Tasks === 'undefined' || !Tasks.Tasklists || !Tasks.Tasks) {
+      throw new Error("The Google Tasks API advanced service is not enabled or is not working correctly. Please enable it in the Apps Script editor under 'Services +'.");
+    }
+
     if (this.taskListIdCache) {
       return this.taskListIdCache;
     }
@@ -41,7 +45,7 @@ export class TasksManager {
 
     try {
       const taskLists = Tasks.Tasklists.list();
-      if (taskLists.items) {
+      if (taskLists && taskLists.items) {
         for (const taskList of taskLists.items) {
           if (taskList.title === taskListName && taskList.id) {
             this.taskListIdCache = taskList.id;
@@ -65,18 +69,21 @@ export class TasksManager {
    * @returns {string | null} The completion date (timestamp) of the task, or null if not found.
    */
   public static findCheckpoint(threadId: string, config: Config): string | null {
+    if (!Tasks || !Tasks.Tasks) {
+      return null;
+    }
     const taskListId = this.getTaskListId(config);
     let checkpoint: string | null = null;
     let pageToken: string | undefined = undefined;
 
     try {
       do {
-        const response = Tasks.Tasks.list(taskListId, {
+        const response: GoogleAppsScript.Tasks.Schema.Tasks = Tasks.Tasks.list(taskListId, {
           showCompleted: true,
           pageToken: pageToken,
         });
 
-        if (response.items) {
+        if (response && response.items) {
           for (const task of response.items) {
             if (task.notes && task.notes.includes(`gmail_thread_id: ${threadId}`) && task.completed) {
               if (!checkpoint || new Date(task.completed) > new Date(checkpoint)) {
@@ -85,7 +92,7 @@ export class TasksManager {
             }
           }
         }
-        pageToken = response.nextPageToken;
+        pageToken = response?.nextPageToken;
       } while (pageToken);
     } catch (e) {
       console.error(`Failed to list tasks: ${e}`);
@@ -108,6 +115,9 @@ export class TasksManager {
     taskDetails: NonNullable<PlanOfAction['task']>,
     config: Config
   ) {
+    if (!Tasks || !Tasks.Tasks) {
+      return;
+    }
     const threadId = thread.getId();
     const permalink = thread.getPermalink();
     const taskListId = this.getTaskListId(config);
@@ -143,24 +153,27 @@ export class TasksManager {
    * @returns {Task | null} The found task object, or null.
    */
   private static findActiveTaskByThreadId(threadId: string, config: Config): Task | null {
+    if (!Tasks || !Tasks.Tasks) {
+        return null;
+    }
     const taskListId = this.getTaskListId(config);
     let pageToken: string | undefined = undefined;
 
     try {
       do {
-        const response = Tasks.Tasks.list(taskListId, {
+        const response: GoogleAppsScript.Tasks.Schema.Tasks = Tasks.Tasks.list(taskListId, {
           showCompleted: false, // Only search active tasks
           pageToken: pageToken,
         });
 
-        if (response.items) {
+        if (response && response.items) {
           for (const task of response.items) {
             if (task.notes && task.notes.includes(`gmail_thread_id: ${threadId}`)) {
               return task; // Return the first active task found
             }
           }
         }
-        pageToken = response.nextPageToken;
+        pageToken = response?.nextPageToken;
       } while (pageToken);
     } catch (e) {
       console.error(`Failed to list active tasks: ${e}`);
@@ -179,5 +192,100 @@ export class TasksManager {
     threadId: string
   ): string {
     return `AI Summary:\n${aiSummary}\n\nLink to Email:\n${permalink}\n\n---\nmanaged_by: gmail-automata\ngmail_thread_id: ${threadId}`;
+  }
+
+  public static testTasksManager(it: Function, expect: (actual: any) => any) {
+    const mockConfig = {
+      default_task_list_name: 'My Tasks',
+    } as Config;
+
+    const mockThread = Mocks.getMockThread({
+      id: 'thread-123',
+      permalink: 'https://mail.google.com/mail/u/0/#inbox/thread-123',
+    });
+
+    it('should find the latest checkpoint from completed tasks', () => {
+      const tasks = [
+        Mocks.getMockTask({ notes: 'gmail_thread_id: thread-123', completed: '2024-01-01T12:00:00.000Z' }),
+        Mocks.getMockTask({ notes: 'gmail_thread_id: thread-123', completed: '2024-01-02T12:00:00.000Z' }), // latest
+        Mocks.getMockTask({ notes: 'gmail_thread_id: thread-456', completed: '2024-01-03T12:00:00.000Z' }),
+      ];
+      global.Tasks = { Tasks: { list: () => ({ items: tasks }) } };
+
+      const checkpoint = TasksManager.findCheckpoint('thread-123', mockConfig);
+      expect(checkpoint).toBe('2024-01-02T12:00:00.000Z');
+    });
+
+    it('should return null if no completed task is found', () => {
+      global.Tasks = { Tasks: { list: () => ({ items: [] }) } };
+      const checkpoint = TasksManager.findCheckpoint('thread-123', mockConfig);
+      expect(checkpoint).toBe(null);
+    });
+
+    it('should create a new task if none exists', () => {
+      let insertCalled = false;
+      global.Tasks = {
+        Tasks: {
+          list: () => ({ items: [] }), // No existing tasks
+          insert: (task: GoogleAppsScript.Tasks.Schema.Task, taskListId: string) => {
+            insertCalled = true;
+            expect(taskListId).toBe('task-list-id-123');
+            expect(task.title).toBe('New Task Title');
+            expect(task.notes).toContain('gmail_thread_id: thread-123');
+            expect(task.notes).toContain('https://mail.google.com/mail/u/0/#inbox/thread-123');
+            return Mocks.getMockTask({});
+          }
+        }
+      };
+
+      TasksManager['taskListIdCache'] = 'task-list-id-123'; // Prime the cache
+      TasksManager.upsertTask(mockThread, { is_required: true, title: 'New Task Title', notes: 'New Notes' }, mockConfig);
+      expect(insertCalled).toBe(true);
+    });
+
+    it('should update an existing task if found', () => {
+      let patchCalled = false;
+      const existingTask = Mocks.getMockTask({ id: 'task-abc', notes: 'gmail_thread_id: thread-123' });
+      global.Tasks = {
+        Tasks: {
+          list: () => ({ items: [existingTask] }),
+          patch: (task: GoogleAppsScript.Tasks.Schema.Task, taskListId: string, taskId: string) => {
+            patchCalled = true;
+            expect(taskListId).toBe('task-list-id-123');
+            expect(taskId).toBe('task-abc');
+            expect(task.title).toBe('Updated Title');
+            return Mocks.getMockTask({});
+          }
+        }
+      };
+
+      TasksManager['taskListIdCache'] = 'task-list-id-123';
+      TasksManager.upsertTask(mockThread, { is_required: true, title: 'Updated Title', notes: 'Updated Notes' }, mockConfig);
+      expect(patchCalled).toBe(true);
+    });
+
+    it('should get task list ID by name and cache it', () => {
+      const taskLists = [
+          Mocks.getMockTaskList({ title: 'Other Tasks', id: 'other-id'}),
+          Mocks.getMockTaskList({ title: 'My Tasks', id: 'my-tasks-id'}),
+      ];
+      global.Tasks = { Tasklists: { list: () => ({ items: taskLists }) } };
+      TasksManager['taskListIdCache'] = null; // Clear cache
+
+      const taskListId = TasksManager['getTaskListId'](mockConfig);
+      expect(taskListId).toBe('my-tasks-id');
+      expect(TasksManager['taskListIdCache']).toBe('my-tasks-id');
+
+      // Second call should use cache, not API
+      global.Tasks.Tasklists.list = () => { throw new Error("API should not be called again"); };
+      const cachedId = TasksManager['getTaskListId'](mockConfig);
+      expect(cachedId).toBe('my-tasks-id');
+    });
+
+    it('should throw an error if task list is not found', () => {
+      global.Tasks = { Tasklists: { list: () => ({ items: [] }) } };
+      TasksManager['taskListIdCache'] = null; // Clear cache
+      expect(() => TasksManager['getTaskListId'](mockConfig)).toThrow("Task list with name 'My Tasks' not found.");
+    });
   }
 }
