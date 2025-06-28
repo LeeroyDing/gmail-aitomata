@@ -16,23 +16,10 @@
 
 // Polyfills
 
-import { testAIAnalyzer } from './AIAnalyzer.test';
-import { testTasksManager } from './TasksManager.test';
-import { AIAnalyzer } from './AIAnalyzer';
-import { TasksManager } from './TasksManager';
-import { AIAnalyzer } from './AIAnalyzer';
-import { TasksManager } from './TasksManager';
 import {Config} from './Config';
-import {JestExpect, JestIt} from './JestSheets';
 import {Processor} from './Processor';
 import {Stats} from './Stats';
 import Utils from './utils';
-
-declare const global: any;
-
-
-declare const global: any;
-
 
 // String.startsWith polyfill
 if (!String.prototype.startsWith) {
