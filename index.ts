@@ -18,11 +18,21 @@
 
 import { testAIAnalyzer } from './AIAnalyzer.test';
 import { testTasksManager } from './TasksManager.test';
+import { AIAnalyzer } from './AIAnalyzer';
+import { TasksManager } from './TasksManager';
+import { AIAnalyzer } from './AIAnalyzer';
+import { TasksManager } from './TasksManager';
 import {Config} from './Config';
 import {JestExpect, JestIt} from './JestSheets';
 import {Processor} from './Processor';
 import {Stats} from './Stats';
 import Utils from './utils';
+
+declare const global: any;
+
+
+declare const global: any;
+
 
 // String.startsWith polyfill
 if (!String.prototype.startsWith) {
@@ -94,11 +104,7 @@ function onOpen(e: { authMode: GoogleAppsScript.Script.AuthMode }) {
             .addItem('Process now', 'processEmails')
             .addSeparator()
             .addItem('Start auto processing', 'setupTriggers')
-            .addItem('Stop auto processing', 'cancelTriggers')
-            .addSeparator()
-            .addSubMenu(
-                ui.createMenu('DEBUG')
-                    .addItem('Run tests', 'testAll'));
+            .addItem('Stop auto processing', 'cancelTriggers');
     }
     menu.addToUi();
 }
@@ -150,26 +156,4 @@ function cancelTriggers() {
     });
 }
 
-function testAll() {
-    const jestExpect = new JestExpect();
-    const jestIt = new JestIt();
-
-    testAIAnalyzer(jestIt.it, jestExpect);
-    testTasksManager(jestIt.it, jestExpect);
-}
-
-
-// noinspection JSUnusedGlobalSymbols
-global.onOpen = onOpen;
-global.processEmails = processEmails;
-global.sanityChecking = sanityChecking;
-global.setupTriggers = setupTriggers;
-global.cancelTriggers = cancelTriggers;
-global.testAll = testAll;
-global.Processor = Processor;
-global.Config = Config;
-global.Stats = Stats;
-global.Utils = Utils;
-global.JestExpect = JestExpect;
-global.JestIt = JestIt;
 

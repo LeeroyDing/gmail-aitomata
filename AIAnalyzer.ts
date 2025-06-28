@@ -141,4 +141,5 @@ export class AIAnalyzer {
       return null;
     }
   }
-}
+
+  }
