@@ -16,13 +16,12 @@
 
 // Polyfills
 
-import Condition from './Condition';
+import { testAIAnalyzer } from './AIAnalyzer.test';
+import { testTasksManager } from './TasksManager.test';
 import {Config} from './Config';
 import {JestExpect, JestIt} from './JestSheets';
 import {Processor} from './Processor';
-import {Rule} from './Rule';
 import {Stats} from './Stats';
-import ThreadAction from './ThreadAction';
 import Utils from './utils';
 
 // String.startsWith polyfill
@@ -155,9 +154,22 @@ function testAll() {
     const jestExpect = new JestExpect();
     const jestIt = new JestIt();
 
-    Condition.testRegex(jestIt.it, jestExpect.expect);
-    Condition.testConditionParsing(jestIt.it, jestExpect.expect);
-    Rule.testRules(jestIt.it, jestExpect.expect);
-    ThreadAction.testThreadActions(jestIt.it, jestExpect.expect);
-    Processor.testProcessing(jestIt.it, jestExpect.expect);
+    testAIAnalyzer(jestIt.it, jestExpect);
+    testTasksManager(jestIt.it, jestExpect);
 }
+
+
+// noinspection JSUnusedGlobalSymbols
+global.onOpen = onOpen;
+global.processEmails = processEmails;
+global.sanityChecking = sanityChecking;
+global.setupTriggers = setupTriggers;
+global.cancelTriggers = cancelTriggers;
+global.testAll = testAll;
+global.Processor = Processor;
+global.Config = Config;
+global.Stats = Stats;
+global.Utils = Utils;
+global.JestExpect = JestExpect;
+global.JestIt = JestIt;
+

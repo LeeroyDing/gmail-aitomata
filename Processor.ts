@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,177 +13,135 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {ActionAfterMatchType, BooleanActionType, InboxActionType} from './ThreadAction';
-import {SessionData} from './SessionData';
-import {ThreadData} from './ThreadData';
-import {Stats} from './Stats';
+
+import { Config } from './Config';
+import { Stats } from './Stats';
 import Utils from './utils';
-import Mocks from './Mocks';
-import {Rule} from './Rule';
+import { AIAnalyzer, PlanOfAction } from './AIAnalyzer';
+import { TasksManager } from './TasksManager';
+
+// Define the possible inbox actions as a type
+export type InboxAction = "ARCHIVE" | "TRASH" | "INBOX";
 
 export class Processor {
+  /**
+   * Processes a single Gmail thread.
+   */
+  private static processThread(
+    thread: GoogleAppsScript.Gmail.GmailThread,
+    config: Config,
+    aiContext: string
+  ) {
+    const threadId = thread.getId();
+    console.log(`Processing thread: ${thread.getFirstMessageSubject()} (${threadId})`);
 
-    private static processThread(session_data: SessionData, thread_data: ThreadData) {
-        for (const message_data of thread_data.message_data_list) {
-            // Apply each rule until matching a rule with a DONE action or matching a rule with
-            // FINISH_STAGE and then exhausting all other rules in that stage.
-            let min_stage = 0;
-            let max_stage = Number.MAX_VALUE;
-            for (const rule of session_data.rules) {
-                if (rule.stage < min_stage) {
-                    continue;
-                }
-                if (rule.stage > max_stage) {
-                    break;
-                }
-                if (rule.condition.match(message_data)) {
-                    console.log(`rule ${rule} matches message ${message_data}, apply action ${rule.thread_action}`);
-                    thread_data.thread_action.mergeFrom(rule.thread_action);
-                    let endThread = false;
-                    switch (rule.thread_action.action_after_match) {
-                        case ActionAfterMatchType.DONE:
-                            // Break out of switch and then out of loop.
-                            endThread = true;
-                            break;
-                        case ActionAfterMatchType.FINISH_STAGE:
-                        case ActionAfterMatchType.DEFAULT:
-                            max_stage = rule.stage;
-                            break;
-                        case ActionAfterMatchType.NEXT_STAGE:
-                            min_stage = rule.stage + 1;
-                            max_stage = Number.MAX_VALUE;
-                            break;
-                    }
-                    if (endThread) {
-                        break;
-                    }
-                }
-            }
-            console.log(`Message is processed at stage ${max_stage}`);
+    // 1. Find the last checkpoint for this thread from Google Tasks.
+    const checkpoint = TasksManager.findCheckpoint(threadId, config);
+    const checkpointTime = checkpoint ? new Date(checkpoint).getTime() : 0;
 
-            // TODO: revisiting if auto labeling should be done differently
-            // update auto labeling
-            // if (thread_data.thread_action.auto_label == BooleanActionType.ENABLE) {
-            //   thread_data.thread_action.addLabels([
-            //     `${session_data.config.auto_labeling_parent_label}/${message_data.list}`]);
-            // }
+    // 2. Filter for messages that are newer than the checkpoint.
+    const newMessages = thread.getMessages().filter(message => {
+      return message.getDate().getTime() > checkpointTime;
+    });
 
-        }
-        thread_data.validateActions();
+    if (newMessages.length === 0) {
+      console.log(`No new messages found for thread ${threadId} since last checkpoint. Skipping.`);
+      // Still need to remove the 'unprocessed' label
+      thread.removeLabel(GmailApp.getUserLabelByName(config.unprocessed_label));
+      thread.addLabel(GmailApp.getUserLabelByName(config.processed_label));
+      return;
     }
 
-    public static processAllUnprocessedThreads() {
-        const start_time = new Date();
+    // 3. Get a "Plan of Action" from the AI.
+    const plan = AIAnalyzer.generatePlan(newMessages, aiContext, config);
 
-        const session_data = new SessionData();
-        if (!session_data.rules) {
-            return;
-        }
-
-        const unprocessed_threads = Utils.withTimer("fetchUnprocessedThreads",
-            () => GmailApp.search('label:' + session_data.config.unprocessed_label, 0,
-                session_data.config.max_threads));
-        Logger.log(`Found ${unprocessed_threads.length} unprocessed threads.`);
-        if (!unprocessed_threads) {
-            Logger.log(`All emails are processed, skip.`);
-            return;
-        }
-
-        const all_thread_data = Utils.withTimer("transformIntoThreadData",
-            () => unprocessed_threads.map(thread => new ThreadData(session_data, thread)));
-
-        let processed_thread_count = 0, processed_message_count = 0;
-        let all_pass = true;
-        Utils.withTimer("collectActions", () => {
-            for (const thread_data of all_thread_data) {
-                try {
-                    Processor.processThread(session_data, thread_data);
-                    processed_thread_count++;
-                    processed_message_count += thread_data.message_data_list.length;
-                } catch (e) {
-                    all_pass = false;
-                    console.error(`Process email failed: ${e}`);
-                    Logger.log(`Process email failed: ${e}`);
-                    // move to inbox for visibility
-                    thread_data.thread_action.move_to = InboxActionType.INBOX;
-                    thread_data.thread_action.label_names.clear();
-                    thread_data.thread_action.label_names.add(session_data.config.processing_failed_label);
-                }
-            }
-        });
-        Logger.log(`Processed ${processed_thread_count} out of ${unprocessed_threads.length}.`);
-
-        Utils.withTimer("applyAllActions", () => ThreadData.applyAllActions(session_data, all_thread_data));
-
-        Utils.withTimer('addStatRecord',
-            () => Stats.addStatRecord(start_time, processed_thread_count, processed_message_count));
-
-        Utils.assert(all_pass, `Some processing fails, check emails`);
+    if (!plan) {
+      console.error(`Failed to get a plan from the AI for thread ${threadId}.`);
+      // Potentially move to an error state
+      return;
     }
 
-    public static testProcessing(it: Function, expect: Function) {
-        function test_proc(
-            sheet_rows: { [key: string]: string}[] = [],
-            thread_messages: Partial<GoogleAppsScript.Gmail.GmailMessage>[] = [],
-            thread: Partial<GoogleAppsScript.Gmail.GmailThread> = {}
-            ): ThreadData {
-
-            const sheet = Mocks.getMockTestSheet(sheet_rows);
-            const rules = Rule.parseRules(sheet);
-            const session_data = Mocks.getMockSessionData({rules: rules});
-            const mock_gmail_thread = Mocks.getMockThreadOfMessages(thread_messages, thread);
-            const thread_data = new ThreadData(session_data, mock_gmail_thread);
-
-            Processor.processThread(session_data, thread_data);
-            return thread_data;
-        }
-
-        it('Throws error when message does not match any rule', () => {
-            expect(() => {
-                test_proc([
-                    {
-                        conditions: '(sender xyz@gmail.com)',
-                        stage: '5',
-                    },
-                ], [
-                    {
-                        getFrom: () => 'abc@gmail.com',
-                    }
-                ])
-            }).toThrow();
-        })
-        it('Does basic actions for simple rule and message', () => {
-            const thread_data = test_proc([
-                {
-                    conditions: '(sender xyz@gmail.com)',
-                    add_labels: 'abc, xyz',
-                    stage: '5',
-                },
-            ], [
-                {
-                    getFrom: () => 'xyz@gmail.com',
-                }
-            ]);
-
-            expect(thread_data.thread_action.action_after_match).toBe(ActionAfterMatchType.DEFAULT);
-            expect(thread_data.thread_action.important).toBe(BooleanActionType.DEFAULT);
-            expect(thread_data.thread_action.label_names).toEqual(new Set(['abc', 'xyz']));
-            expect(thread_data.thread_action.move_to).toBe(InboxActionType.DEFAULT);
-            expect(thread_data.thread_action.read).toBe(BooleanActionType.DEFAULT);
-        })
-        it('Throws error when message matches action but has no actions', () => {
-            expect(() => {
-                test_proc([
-                    {
-                        conditions: '(sender xyz@gmail.com)',
-                        stage: '5',
-                    },
-                ], [
-                    {
-                        getFrom: () => 'xyz@gmail.com',
-                        }
-                ])
-            }).toThrow();
-        })
+    // 4. Execute the plan.
+    if (plan.task && plan.task.is_required) {
+      TasksManager.upsertTask(thread, plan.task, config);
     }
+
+    // Apply inbox actions
+    switch (plan.action.move_to) {
+      case 'ARCHIVE':
+        thread.moveToArchive();
+        break;
+      case 'TRASH':
+        thread.moveToTrash();
+        break;
+      case 'INBOX':
+        thread.moveToInbox();
+        break;
+    }
+
+    if (plan.action.mark_read) {
+      thread.markRead();
+    } else {
+      thread.markUnread();
+    }
+
+    // 5. Mark as processed.
+    thread.removeLabel(GmailApp.getUserLabelByName(config.unprocessed_label));
+    thread.addLabel(GmailApp.getUserLabelByName(config.processed_label));
+    console.log(`Finished processing thread ${threadId}.`);
+  }
+
+  /**
+   * Fetches and processes all unprocessed threads.
+   */
+  public static processAllUnprocessedThreads() {
+    const startTime = new Date();
+    const config = Config.getConfig();
+    const aiContext = AIAnalyzer.getContext(); // Assuming a static method to get context
+
+    const unprocessedLabel = GmailApp.getUserLabelByName(config.unprocessed_label);
+    if (!unprocessedLabel) {
+      throw new Error(`Label '${config.unprocessed_label}' not found. Please create it.`);
+    }
+    
+    const processedLabel = GmailApp.getUserLabelByName(config.processed_label);
+    if (!processedLabel) {
+        throw new Error(`Label '${config.processed_label}' not found. Please create it.`);
+    }
+
+    const unprocessedThreads = unprocessedLabel.getThreads(0, config.max_threads);
+    Logger.log(`Found ${unprocessedThreads.length} unprocessed threads.`);
+    if (unprocessedThreads.length === 0) {
+      Logger.log(`All emails are processed, skip.`);
+      return;
+    }
+
+    let processedThreadCount = 0;
+    let allPass = true;
+
+    for (const thread of unprocessedThreads) {
+      try {
+        this.processThread(thread, config, aiContext);
+        processedThreadCount++;
+      } catch (e) {
+        allPass = false;
+        const threadId = thread.getId();
+        console.error(`Failed to process thread ${threadId}: ${e}`);
+        Logger.log(`Failed to process thread ${threadId}: ${e}`);
+        // Apply error label and move to inbox for visibility
+        const errorLabel = GmailApp.getUserLabelByName(config.processing_failed_label);
+        if (errorLabel) {
+          thread.addLabel(errorLabel);
+        }
+        thread.moveToInbox();
+      }
+    }
+
+    Logger.log(`Processed ${processedThreadCount} out of ${unprocessedThreads.length}.`);
+    Stats.addStatRecord(startTime, processedThreadCount, 0); // message count is harder to get now
+
+    if (!allPass) {
+      throw new Error('Some threads failed to process. Please check the logs and your inbox for emails with the error label.');
+    }
+  }
 }

@@ -24,7 +24,8 @@ export interface MutableConfig {
     hour_of_day_to_run_sanity_checking: number;
     go_link: string;
     max_threads: number;
-    auto_labeling_parent_label: string;
+    default_task_list_name: string;
+    GEMINI_API_KEY: string;
 }
 
 export class Config implements Readonly<MutableConfig> {
@@ -35,7 +36,8 @@ export class Config implements Readonly<MutableConfig> {
     public readonly hour_of_day_to_run_sanity_checking: number;
     public readonly go_link: string;
     public readonly max_threads: number;
-    public readonly auto_labeling_parent_label: string;
+    public readonly default_task_list_name: string;
+    public readonly GEMINI_API_KEY: string;
 
     private static validate(config: Config) {
         Utils.assert(config.unprocessed_label.length > 0, "unprocessed_label can't be empty");
@@ -46,13 +48,14 @@ export class Config implements Readonly<MutableConfig> {
     public static getConfig(): Config {
         let config: MutableConfig = {
             unprocessed_label: "unprocessed",
-            processed_label: "",
+            processed_label: "processed",
             processing_failed_label: "error",
             processing_frequency_in_minutes: 5,
             hour_of_day_to_run_sanity_checking: 0,
             go_link: "",
             max_threads: 50,
-            auto_labeling_parent_label: "",
+            default_task_list_name: "My Tasks",
+            GEMINI_API_KEY: "",
         };
 
         const values = Utils.withTimer("GetConfigValues", () => {
@@ -67,7 +70,7 @@ export class Config implements Readonly<MutableConfig> {
 
         for (let row = 0; row < num_rows; row++) {
             const [name, value] = values[row];
-            if (name.length === 0) {
+            if (name.length === 0 || value.length === 0) {
                 continue;
             }
 
@@ -86,7 +89,8 @@ export class Config implements Readonly<MutableConfig> {
                 case "processed_label":
                 case "processing_failed_label":
                 case "go_link":
-                case "auto_labeling_parent_label": {
+                case "default_task_list_name":
+                case "GEMINI_API_KEY": {
                     config[name] = value;
                     break;
                 }
@@ -97,6 +101,6 @@ export class Config implements Readonly<MutableConfig> {
         }
 
         Config.validate(config);
-        return config;
+        return config as Config;
     }
 }
