@@ -12,7 +12,6 @@
     "isolatedModules": true,
     // "noResolve": true,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitUseStrict": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noImplicitAny": true,
