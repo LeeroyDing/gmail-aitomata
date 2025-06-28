@@ -1,21 +1,85 @@
-/**
- * Copyright 2020 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+import { Mocks } from './Mocks';
+import { Processor } from './Processor';
+import { AIAnalyzer } from './AIAnalyzer';
+import { TasksManager } from './TasksManager';
+import { Config } from './Config';
 
-import {Processor} from './Processor';
+jest.mock('./AIAnalyzer');
+jest.mock('./TasksManager');
+jest.mock('./Config');
+
+global.SpreadsheetApp = {
+  getActiveSpreadsheet: jest.fn(() => ({
+    getSheetByName: jest.fn(() => ({
+      appendRow: jest.fn(),
+    })),
+  })),
+} as any;
+
+global.Logger = {
+  log: jest.fn(),
+  clear: jest.fn(),
+  getLog: jest.fn(),
+};
 
 describe('Processor Tests', () => {
-    Processor.testProcessing(it, expect);
-})
+  beforeEach(() => {
+    // Reset mocks before each test
+    (AIAnalyzer.generatePlan as jest.Mock).mockClear();
+    (TasksManager.findCheckpoint as jest.Mock).mockClear();
+    (TasksManager.upsertTask as jest.Mock).mockClear();
+    (Config.getConfig as jest.Mock).mockClear();
+  });
+
+  it('should process a simple thread correctly', () => {
+    // Setup
+    const mockThread = Mocks.getMockThread({
+      getId: () => 'thread-1',
+      getFirstMessageSubject: () => 'Test Subject',
+      getMessages: () => [Mocks.getMockMessage({ getDate: () => new Date() })],
+      removeLabel: jest.fn(),
+      addLabel: jest.fn(),
+      moveToArchive: jest.fn(),
+    });
+
+    const mockConfig = {
+      unprocessed_label: 'unprocessed',
+      processed_label: 'processed',
+      processing_failed_label: 'error',
+      max_threads: 50,
+    };
+    (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
+
+    const mockPlan = {
+      action: { move_to: 'ARCHIVE', mark_read: true },
+      task: { is_required: false },
+    };
+    (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
+    (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
+
+    const unprocessedLabel = { getThreads: () => [mockThread] };
+    global.GmailApp = {
+      getUserLabelByName: jest.fn((name: string) => {
+        if (name === 'unprocessed') {
+          return unprocessedLabel as any;
+        }
+        return {
+          getName: () => name,
+        } as any;
+      }),
+    } as any;
+
+    // Execute
+    Processor.processAllUnprocessedThreads();
+
+    // Verify
+    expect(TasksManager.findCheckpoint).toHaveBeenCalledWith(
+      'thread-1',
+      mockConfig
+    );
+    expect(AIAnalyzer.generatePlan).toHaveBeenCalled();
+    expect(TasksManager.upsertTask).not.toHaveBeenCalled();
+    expect(mockThread.moveToArchive).toHaveBeenCalled();
+    expect(mockThread.removeLabel).toHaveBeenCalledWith(unprocessedLabel);
+  });
+});
