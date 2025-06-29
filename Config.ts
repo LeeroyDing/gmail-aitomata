@@ -70,8 +70,18 @@ export class Config implements Readonly<MutableConfig> {
 
         for (let row = 0; row < num_rows; row++) {
             const [name, value] = values[row];
-            if (name.length === 0 || value.length === 0) {
+            if (name.length === 0) {
                 continue;
+            }
+
+            // Allow string configs to be empty, but skip numeric configs if empty.
+            if (value.length === 0) {
+                switch (name) {
+                    case "processing_frequency_in_minutes":
+                    case "hour_of_day_to_run_sanity_checking":
+                    case "max_threads":
+                        continue;
+                }
             }
 
             switch (name) {

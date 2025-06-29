@@ -47,7 +47,9 @@ export class Processor {
       console.log(`No new messages found for thread ${threadId} since last checkpoint. Skipping.`);
       // Still need to remove the 'unprocessed' label
       thread.removeLabel(GmailApp.getUserLabelByName(config.unprocessed_label));
-      thread.addLabel(GmailApp.getUserLabelByName(config.processed_label));
+      if (config.processed_label) {
+        thread.addLabel(GmailApp.getUserLabelByName(config.processed_label));
+      }
       return;
     }
 
@@ -61,9 +63,10 @@ export class Processor {
     }
 
     // 4. Execute the plan.
-    if (plan.task && plan.task.is_required) {
-      TasksManager.upsertTask(thread, plan.task, config);
+    if (!plan.task.title) {
+      plan.task.title = thread.getFirstMessageSubject();
     }
+    TasksManager.upsertTask(thread, plan.task, config);
 
     // Apply inbox actions
     switch (plan.action.move_to) {
@@ -86,7 +89,9 @@ export class Processor {
 
     // 5. Mark as processed.
     thread.removeLabel(GmailApp.getUserLabelByName(config.unprocessed_label));
-    thread.addLabel(GmailApp.getUserLabelByName(config.processed_label));
+    if (config.processed_label) {
+      thread.addLabel(GmailApp.getUserLabelByName(config.processed_label));
+    }
     console.log(`Finished processing thread ${threadId}.`);
   }
 
@@ -103,9 +108,11 @@ export class Processor {
       throw new Error(`Label '${config.unprocessed_label}' not found. Please create it.`);
     }
     
-    const processedLabel = GmailApp.getUserLabelByName(config.processed_label);
-    if (!processedLabel) {
+    if (config.processed_label) {
+      const processedLabel = GmailApp.getUserLabelByName(config.processed_label);
+      if (!processedLabel) {
         throw new Error(`Label '${config.processed_label}' not found. Please create it.`);
+      }
     }
 
     const unprocessedThreads = unprocessedLabel.getThreads(0, config.max_threads);
@@ -145,7 +152,4 @@ export class Processor {
   }
 }
 
-// Expose the function to the global scope for Google Apps Script
-(global as any).processAllUnprocessedThreads = () => {
-  Processor.processAllUnprocessedThreads();
-};
+

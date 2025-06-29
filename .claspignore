@@ -4,3 +4,4 @@ build/**
 node_modules/**
 *.test.*
 jest.config.js
+jest.setup.js

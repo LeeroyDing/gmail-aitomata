@@ -62,11 +62,11 @@ describe('AIAnalyzer Tests', () => {
     const mockContext = 'Test Context';
     const mockPlan: PlanOfAction = {
       action: { move_to: 'ARCHIVE', mark_read: true },
-      task: { is_required: true, title: 'Test Task', notes: 'Test Notes' },
+      task: { title: 'Test Task', notes: 'Test Notes' },
     };
 
     (global.UrlFetchApp.fetch as jest.Mock).mockImplementation((url, params) => {
-      expect(url).toContain('gemini-pro:generateContent');
+      expect(url).toContain('gemini-2.5-flash-preview-04-17:generateContent');
       const payload = JSON.parse(params.payload as string);
       expect(payload.contents[0].parts[0].text).toContain('Test Subject');
       expect(payload.contents[0].parts[0].text).toContain('Test Context');

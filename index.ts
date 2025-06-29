@@ -15,7 +15,6 @@
  */
 
 import {Config} from './Config';
-import {JestExpect, JestIt} from './JestSheets';
 import {Processor} from './Processor';
 import {Stats} from './Stats';
 import Utils from './utils';
@@ -140,14 +139,7 @@ function setupTriggers() {
     });
 }
 
-// @ts-ignore
-function testAll() {
-    const jestExpect = new JestExpect();
-    const jestIt = new JestIt();
 
-    AIAnalyzer.testAIAnalyzer(jestIt.it, (actual) => jestExpect.expect(actual));
-    TasksManager.testTasksManager(jestIt.it, (actual) => jestExpect.expect(actual));
-}
 
 
 

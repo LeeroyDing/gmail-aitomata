@@ -25,8 +25,7 @@ export interface PlanOfAction {
     move_to: InboxAction;
     mark_read: boolean;
   };
-  task?: {
-    is_required: boolean;
+  task: {
     title: string;
     notes: string;
     due_date?: string; // YYYY-MM-DD format
@@ -75,7 +74,7 @@ export class AIAnalyzer {
       throw new Error("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
     }
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${apiKey}`;
 
     const messageContent = this.formatMessagesForAI(messages);
 
@@ -95,15 +94,15 @@ export class AIAnalyzer {
 
       **YOUR TASK:**
       Respond ONLY with a valid JSON object in the following format. Do not include any other text or markdown formatting.
+      The "title" and "notes" fields must not be null or empty.
       {
         "action": {
           "move_to": "ARCHIVE" | "TRASH" | "INBOX",
           "mark_read": boolean
         },
         "task": {
-          "is_required": boolean,
-          "title": "A concise, action-oriented title" | null,
-          "notes": "A detailed summary for the task body" | null,
+          "title": "A concise, action-oriented title. MUST NOT BE EMPTY.",
+          "notes": "A detailed summary for the task body. MUST NOT BE EMPTY.",
           "due_date": "YYYY-MM-DD" | null
         }
       }

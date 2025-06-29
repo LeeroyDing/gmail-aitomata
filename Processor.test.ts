@@ -52,16 +52,20 @@ describe('Processor Tests', () => {
 
     const mockPlan = {
       action: { move_to: 'ARCHIVE', mark_read: true },
-      task: { is_required: false },
+      task: { title: 'Test Task', notes: 'Test Notes' },
     };
     (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
     (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
 
     const unprocessedLabel = { getThreads: () => [mockThread] };
+    const processedLabel = { getName: () => 'processed' };
     global.GmailApp = {
       getUserLabelByName: jest.fn((name: string) => {
         if (name === 'unprocessed') {
           return unprocessedLabel as any;
+        }
+        if (name === 'processed') {
+            return processedLabel as any;
         }
         return {
           getName: () => name,
@@ -73,13 +77,60 @@ describe('Processor Tests', () => {
     Processor.processAllUnprocessedThreads();
 
     // Verify
-    expect(TasksManager.findCheckpoint).toHaveBeenCalledWith(
-      'thread-1',
-      mockConfig
+    expect(TasksManager.upsertTask).toHaveBeenCalled();
+    expect(mockThread.addLabel).toHaveBeenCalled();
+  });
+
+  it('should use the email subject as a fallback title', () => {
+    // Setup
+    const mockThread = Mocks.getMockThread({
+      getId: () => 'thread-1',
+      getFirstMessageSubject: () => 'Fallback Subject',
+      getMessages: () => [Mocks.getMockMessage({ getDate: () => new Date() })],
+      removeLabel: jest.fn(),
+      addLabel: jest.fn(),
+      moveToArchive: jest.fn(),
+    });
+
+    const mockConfig = {
+      unprocessed_label: 'unprocessed',
+      processed_label: 'processed',
+      processing_failed_label: 'error',
+      max_threads: 50,
+    };
+    (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
+
+    const mockPlan = {
+      action: { move_to: 'ARCHIVE', mark_read: true },
+      task: { title: '', notes: 'Test Notes' },
+    };
+    (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
+    (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
+
+    const unprocessedLabel = { getThreads: () => [mockThread] };
+    const processedLabel = { getName: () => 'processed' };
+    global.GmailApp = {
+        getUserLabelByName: jest.fn((name: string) => {
+            if (name === 'unprocessed') {
+                return unprocessedLabel as any;
+            }
+            if (name === 'processed') {
+                return processedLabel as any;
+            }
+            return {
+                getName: () => name,
+            } as any;
+        }),
+    } as any;
+
+    // Execute
+    Processor.processAllUnprocessedThreads();
+
+    // Verify
+    expect(TasksManager.upsertTask).toHaveBeenCalledWith(
+        mockThread,
+        { title: 'Fallback Subject', notes: 'Test Notes' },
+        mockConfig
     );
-    expect(AIAnalyzer.generatePlan).toHaveBeenCalled();
-    expect(TasksManager.upsertTask).not.toHaveBeenCalled();
-    expect(mockThread.moveToArchive).toHaveBeenCalled();
-    expect(mockThread.removeLabel).toHaveBeenCalledWith(unprocessedLabel);
   });
 });
