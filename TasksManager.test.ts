@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Copyright 2024 Google LLC
  *
@@ -14,6 +15,7 @@
  * limitations under the License.
  */
 
+import './jest.setup.js';
 import { Mocks } from './Mocks';
 import { TasksManager } from './TasksManager';
 import { Config } from './Config';
@@ -32,17 +34,10 @@ describe('TasksManager Tests', () => {
 
   beforeEach(() => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
-    global.Tasks = {
-      Tasklists: {
-        list: jest.fn(),
-      },
-      Tasks: {
-        list: jest.fn(),
-        insert: jest.fn(),
-        patch: jest.fn(),
-      },
-    } as any;
     (TasksManager as any).taskListIdCache = null;
+    global.Tasks.Tasklists.list.mockReturnValue({
+      items: [Mocks.getMockTaskList({ title: 'My Tasks', id: 'task-list-id-123' })],
+    });
   });
 
   it('should find the latest checkpoint from completed tasks', () => {

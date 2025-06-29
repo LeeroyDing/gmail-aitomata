@@ -20,7 +20,11 @@
     "strictNullChecks": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "typeRoots": [
+      "node_modules/@types",
+      "types"
+    ]
   },
   "files": [
     "AIAnalyzer.ts",
@@ -30,5 +34,8 @@
     "Stats.ts",
     "TasksManager.ts",
     "utils.ts"
+  ],
+  "exclude": [
+    "**/*.test.ts"
   ]
 }

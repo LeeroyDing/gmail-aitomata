@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,28 @@
  * limitations under the License.
  */
 
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  setupFilesAfterEnv: ['./jest.setup.js'],
+// Define mock objects for Google Apps Script services
+global.Tasks = {
+  Tasklists: {
+    list: jest.fn(),
+  },
+  Tasks: {
+    list: jest.fn(),
+    insert: jest.fn(),
+    patch: jest.fn(),
+  },
+};
+
+global.SpreadsheetApp = {
+  getActiveSpreadsheet: jest.fn(() => ({
+    getSheetByName: jest.fn(),
+  })),
+};
+
+global.UrlFetchApp = {
+  fetch: jest.fn(),
+};
+
+global.Logger = {
+  log: jest.fn(),
 };

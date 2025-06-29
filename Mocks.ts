@@ -18,13 +18,16 @@ export const Mocks = {
     ...{
       getDate: () => new Date(),
       getFrom: () => 'test@example.com',
+      getTo: () => 'test@example.com',
       getSubject: () => 'Test Subject',
+      getPlainBody: () => 'Test Body',
     },
     ...overrides,
   }),
   getMockSheet: (data: any[][]) => ({
     getDataRange: () => ({
       getValues: () => data,
+      getDisplayValues: () => data,
     }),
   }),
   getMockSpreadsheet: (sheets: { [key: string]: any }) => ({
@@ -168,5 +171,31 @@ export const Mocks = {
     getBlob: () => ({} as any),
     getContent: () => [],
     getHeaders: () => ({}),
+  }),
+  getMockTask: (overrides: any) => ({
+    ...{
+      id: 'task-id',
+      title: 'Test Task',
+      notes: 'gmail_thread_id: thread-id',
+      completed: null,
+      due: null,
+      hidden: false,
+      parent: null,
+      position: '0',
+      status: 'needsAction',
+      links: [],
+      selfLink: '',
+      updated: '',
+    },
+    ...overrides,
+  }),
+  getMockTaskList: (overrides: any) => ({
+    ...{
+      id: 'task-list-id',
+      title: 'Test Task List',
+      selfLink: '',
+      updated: '',
+    },
+    ...overrides,
   }),
 };

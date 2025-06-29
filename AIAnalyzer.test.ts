@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import './jest.setup.js';
 import { Mocks } from './Mocks';
 import { AIAnalyzer, PlanOfAction } from './AIAnalyzer';
 import { Config } from './Config';
