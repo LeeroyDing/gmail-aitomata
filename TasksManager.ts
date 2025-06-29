@@ -119,14 +119,13 @@ export class TasksManager {
       return;
     }
     const threadId = thread.getId();
-    const permalink = thread.getPermalink();
     const taskListId = this.getTaskListId(config);
 
     const existingTask = this.findActiveTaskByThreadId(threadId, config);
 
     const taskData: Task = {
       title: taskDetails.title,
-      notes: this.formatTaskNotes(taskDetails.notes, permalink, threadId),
+      notes: this.formatTaskNotes(taskDetails.notes, threadId),
       due: taskDetails.due_date ? `${taskDetails.due_date}T00:00:00.000Z` : undefined,
     };
 
@@ -188,9 +187,9 @@ export class TasksManager {
    */
   private static formatTaskNotes(
     aiSummary: string,
-    permalink: string,
     threadId: string
   ): string {
+    const permalink = `https://mail.google.com/mail/u/0/#inbox/${threadId}`;
     return `AI Summary:\n${aiSummary}\n\nLink to Email:\n${permalink}\n\n---\nmanaged_by: gmail-automata\ngmail_thread_id: ${threadId}`;
   }
 }

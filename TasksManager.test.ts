@@ -64,7 +64,7 @@ describe('TasksManager Tests', () => {
       items: [Mocks.getMockTaskList({ title: 'My Tasks', id: 'task-list-id-123' })],
     });
 
-    TasksManager.upsertTask(mockThread, { is_required: true, title: 'New Task Title', notes: 'New Notes' }, mockConfig);
+    TasksManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
 
     expect(global.Tasks.Tasks.insert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -82,7 +82,7 @@ describe('TasksManager Tests', () => {
       items: [Mocks.getMockTaskList({ title: 'My Tasks', id: 'task-list-id-123' })],
     });
 
-    TasksManager.upsertTask(mockThread, { is_required: true, title: 'Updated Title', notes: 'Updated Notes' }, mockConfig);
+    TasksManager.upsertTask(mockThread, { title: 'Updated Title', notes: 'Updated Notes' }, mockConfig);
 
     expect(global.Tasks.Tasks.patch).toHaveBeenCalledWith(
       expect.objectContaining({
