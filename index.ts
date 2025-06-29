@@ -93,7 +93,7 @@ function onOpen(e: { authMode: GoogleAppsScript.Script.AuthMode }) {
             .addItem('Process now', 'processEmails')
             .addSeparator()
             .addItem('Start auto processing', 'setupTriggers')
-            .addItem('Stop auto processing', 'cancelTriggers');
+            .addItem('Stop auto processing', 'stopAutoProcessing');
     }
     menu.addToUi();
 }
@@ -106,16 +106,11 @@ function processEmails() {
 }
 
 // @ts-ignore
-function sanityChecking() {
-    Utils.withFailureEmailed("sanityChecking", () => {
-        Stats.collapseStatRecords();
-    });
-}
-
-// @ts-ignore
 function setupTriggers() {
     ensurePermissionsEstablished();
-    cancelTriggers();
+
+    // First, cancel all existing triggers to avoid duplicates.
+    stopAutoProcessing();
 
     Utils.withFailureEmailed("setupTriggers", () => {
         const config = Utils.withTimer("getConfigs", () => Config.getConfig());
@@ -125,18 +120,21 @@ function setupTriggers() {
                 .everyMinutes(config.processing_frequency_in_minutes)
                 .create();
             Logger.log(`Created trigger ${trigger.getHandlerFunction()}: ${trigger.getUniqueId()}`);
-            trigger = ScriptApp.newTrigger('sanityChecking')
-                .timeBased()
-                .atHour(config.hour_of_day_to_run_sanity_checking)
-                .everyDays(1)
-                .create();
-            Logger.log(`Created trigger ${trigger.getHandlerFunction()}: ${trigger.getUniqueId()}`);
 
-            Utils.assert(ScriptApp.getProjectTriggers().length === 2,
+            Utils.assert(ScriptApp.getProjectTriggers().length === 1,
                 `Unexpected trigger lists: ${ScriptApp.getProjectTriggers()
                     .map(trigger => trigger.getHandlerFunction())}`);
         });
     });
+}
+
+function stopAutoProcessing() {
+    // Deletes all triggers in the current project.
+    const allTriggers = ScriptApp.getProjectTriggers();
+    for (const trigger of allTriggers) {
+        ScriptApp.deleteTrigger(trigger);
+    }
+    Logger.log('All triggers have been deleted.');
 }
 
 

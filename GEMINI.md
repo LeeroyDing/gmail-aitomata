@@ -33,3 +33,7 @@ The script now automatically creates a task in Google Tasks for every email, usi
 - **Fallback Mechanisms:** Implement fallback mechanisms to handle cases where the AI's output is not as expected.
 - **Automated Configuration:** Use `appsscript.json` to automate the configuration of required services and APIs.
 - **Versioned Models:** Use specific, versioned AI models to ensure stability and prevent unexpected behavior from model updates.
+
+## Ideas for Future Improvement
+
+- **Refactor to a Library:** To simplify updates across multiple copies of the spreadsheet, the core logic could be refactored into a standalone Google Apps Script library. This would allow for centralized code management and automatic updates for all users of the library.
