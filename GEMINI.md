@@ -4,10 +4,12 @@
 Evolve the script from a static, rule-based system to an intelligent email assistant using an LLM to manage a to-do list in Google Tasks and organize the inbox.
 
 ## Current Status
-The script now automatically creates a task in Google Tasks for every email, using an AI to generate a title and summary. The system is more robust, with improved error handling and a fallback mechanism for task titles.
+The script now intelligently analyzes incoming emails to determine if they are actionable. For actionable emails, it automatically creates a task in Google Tasks with an AI-generated title and summary. Non-actionable emails are left as unread in the inbox, ensuring that only relevant items are added to your to-do list.
 
 ### Key Achievements
-- **Mandatory Task Creation:** Every email is now guaranteed to have a corresponding task in Google Tasks.
+- **Selective Task Creation:** Only actionable emails result in the creation of a Google Task, reducing clutter in your to-do list.
+- **Intelligent Email Analysis:** The AI determines whether an email requires action, and therefore a task.
+- **Non-Actionable Email Handling:** Emails that are not actionable are left unread in the inbox for manual review.
 - **AI-Powered Summaries:** The AI is instructed to always provide a non-empty title and summary for each task.
 - **Robust Fallback:** If the AI fails to generate a task title, the email's subject is used as a fallback.
 - **Automated API Configuration:** The Google Tasks API is now automatically enabled during deployment, eliminating the need for manual setup.

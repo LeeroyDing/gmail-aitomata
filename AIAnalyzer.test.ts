@@ -80,6 +80,24 @@ describe('AIAnalyzer Tests', () => {
     expect(plan).toEqual(mockPlan);
   });
 
+  it('should generate a plan without a task if the email is not actionable', () => {
+    const mockMessages = [Mocks.getMockMessage({ subject: 'Non-Actionable', plainBody: 'FYI only' })];
+    const mockContext = 'Test Context';
+    const mockPlan: PlanOfAction = {
+      action: { move_to: 'ARCHIVE', mark_read: true },
+    };
+
+    (global.UrlFetchApp.fetch as jest.Mock).mockImplementation((url, params) => {
+      return Mocks.getMockUrlFetchResponse(200, JSON.stringify({
+        candidates: [{ content: { parts: [{ text: JSON.stringify(mockPlan) }] } }],
+      }));
+    });
+
+    const plan = AIAnalyzer.generatePlan(mockMessages, mockContext, mockConfig);
+    expect(plan).toEqual(mockPlan);
+    expect(plan?.task).toBeUndefined();
+  });
+
   it('should handle AI API errors gracefully', () => {
     const mockMessages = [Mocks.getMockMessage({})];
     

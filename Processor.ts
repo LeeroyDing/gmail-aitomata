@@ -63,10 +63,15 @@ export class Processor {
     }
 
     // 4. Execute the plan.
-    if (!plan.task.title) {
-      plan.task.title = thread.getFirstMessageSubject();
+    if (plan.task) {
+      if (!plan.task.title) {
+        plan.task.title = thread.getFirstMessageSubject();
+      }
+      TasksManager.upsertTask(thread, plan.task, config);
+    } else {
+      // If no task, leave the email unread
+      plan.action.mark_read = false;
     }
-    TasksManager.upsertTask(thread, plan.task, config);
 
     // Apply inbox actions
     switch (plan.action.move_to) {
