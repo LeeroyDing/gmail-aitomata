@@ -190,7 +190,7 @@ export class TasksManager {
     threadId: string
   ): string {
     const permalink = `https://mail.google.com/mail/u/0/#inbox/${threadId}`;
-    return `AI Summary:\n${aiSummary}\n\nLink to Email:\n${permalink}\n\n---\nmanaged_by: gmail-automata\ngmail_thread_id: ${threadId}`;
+    return `${aiSummary}\n\nLink to Email:\n${permalink}\n\n---\nmanaged_by: gmail-automata\ngmail_thread_id: ${threadId}`;
   }
 }
 

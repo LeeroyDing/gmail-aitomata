@@ -69,7 +69,7 @@ describe('TasksManager Tests', () => {
     expect(global.Tasks.Tasks.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'New Task Title',
-        notes: expect.stringContaining('gmail_thread_id: thread-123'),
+        notes: 'New Notes\n\nLink to Email:\nhttps://mail.google.com/mail/u/0/#inbox/thread-123\n\n---\nmanaged_by: gmail-automata\ngmail_thread_id: thread-123',
       }),
       'task-list-id-123'
     );
