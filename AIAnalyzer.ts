@@ -93,20 +93,9 @@ export class AIAnalyzer {
       ---
 
       **YOUR TASK:**
-      Respond ONLY with a valid JSON object in the following format. Do not include any other text or markdown formatting.
+      Generate a JSON "Plan of Action".
       If the email is actionable, create a task. Otherwise, do not include the "task" object.
       The "title" and "notes" fields must not be null or empty if the task is present.
-      {
-        "action": {
-          "move_to": "ARCHIVE" | "TRASH" | "INBOX",
-          "mark_read": boolean
-        },
-        "task"?: {
-          "title": "A concise, action-oriented title. MUST NOT BE EMPTY.",
-          "notes": "A detailed summary for the task body. MUST NOT BE EMPTY.",
-          "due_date": "YYYY-MM-DD" | null
-        }
-      }
     `;
 
     const requestOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
@@ -116,6 +105,26 @@ export class AIAnalyzer {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           response_mime_type: "application/json",
+          response_schema: {
+            type: "OBJECT",
+            properties: {
+              action: {
+                type: "OBJECT",
+                properties: {
+                  move_to: { type: "STRING", enum: ["ARCHIVE", "TRASH", "INBOX"] },
+                  mark_read: { type: "BOOLEAN" },
+                },
+              },
+              task: {
+                type: "OBJECT",
+                properties: {
+                  title: { type: "STRING" },
+                  notes: { type: "STRING" },
+                  due_date: { type: "STRING" },
+                },
+              },
+            },
+          },
         }
       }),
       muteHttpExceptions: true,
