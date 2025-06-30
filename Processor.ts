@@ -17,7 +17,7 @@
 import { Config } from './Config';
 import { Stats } from './Stats';
 import { AIAnalyzer } from './AIAnalyzer';
-import { TasksManager } from './TasksManager';
+import { TasksManagerFactory } from './TasksManagerFactory';
 
 // Define the possible inbox actions as a type
 export type InboxAction = "ARCHIVE" | "TRASH" | "INBOX";
@@ -34,8 +34,10 @@ export class Processor {
     const threadId = thread.getId();
     console.log(`Processing thread: ${thread.getFirstMessageSubject()} (${threadId})`);
 
+    const tasksManager = TasksManagerFactory.getTasksManager(config);
+
     // 1. Find the last checkpoint for this thread from Google Tasks.
-    const checkpoint = TasksManager.findCheckpoint(threadId, config);
+    const checkpoint = tasksManager.findCheckpoint(threadId, config);
     const checkpointTime = checkpoint ? new Date(checkpoint).getTime() : 0;
 
     // 2. Filter for messages that are newer than the checkpoint.
@@ -67,7 +69,7 @@ export class Processor {
       if (!plan.task.title) {
         plan.task.title = thread.getFirstMessageSubject();
       }
-      TasksManager.upsertTask(thread, plan.task, config);
+      tasksManager.upsertTask(thread, plan.task, config);
     } else {
       // If no task, leave the email unread
       plan.action.mark_read = false;

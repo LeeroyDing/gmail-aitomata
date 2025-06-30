@@ -24,8 +24,11 @@ export interface MutableConfig {
     hour_of_day_to_run_sanity_checking: number;
     go_link: string;
     max_threads: number;
+    task_service: 'Google Tasks' | 'Todoist';
     default_task_list_name: string;
     GEMINI_API_KEY: string;
+    todoist_api_key: string;
+    todoist_project_id: string;
 }
 
 export class Config implements Readonly<MutableConfig> {
@@ -36,8 +39,11 @@ export class Config implements Readonly<MutableConfig> {
     public readonly hour_of_day_to_run_sanity_checking: number;
     public readonly go_link: string;
     public readonly max_threads: number;
+    public readonly task_service: 'Google Tasks' | 'Todoist';
     public readonly default_task_list_name: string;
     public readonly GEMINI_API_KEY: string;
+    public readonly todoist_api_key: string;
+    public readonly todoist_project_id: string;
 
     private static validate(config: Config) {
         Utils.assert(config.unprocessed_label.length > 0, "unprocessed_label can't be empty");
@@ -54,8 +60,11 @@ export class Config implements Readonly<MutableConfig> {
             hour_of_day_to_run_sanity_checking: 0,
             go_link: "",
             max_threads: 50,
+            task_service: 'Google Tasks',
             default_task_list_name: "My Tasks",
             GEMINI_API_KEY: "",
+            todoist_api_key: "",
+            todoist_project_id: "",
         };
 
         const values = Utils.withTimer("GetConfigValues", () => {
@@ -95,12 +104,22 @@ export class Config implements Readonly<MutableConfig> {
                     config[name] = result;
                     break;
                 }
+                case "task_service": {
+                    if (value === 'Google Tasks' || value === 'Todoist') {
+                        config[name] = value;
+                    } else {
+                        throw `Invalid task_service: ${value}`;
+                    }
+                    break;
+                }
                 case "unprocessed_label":
                 case "processed_label":
                 case "processing_failed_label":
                 case "go_link":
                 case "default_task_list_name":
-                case "GEMINI_API_KEY": {
+                case "GEMINI_API_KEY":
+                case "todoist_api_key":
+                case "todoist_project_id": {
                     config[name] = value;
                     break;
                 }
