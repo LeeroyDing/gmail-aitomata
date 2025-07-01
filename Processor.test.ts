@@ -135,6 +135,43 @@ describe('Processor Tests', () => {
     );
   });
 
+  it('should not process the email if the AI call fails', () => {
+    // Setup
+    const mockThread = Mocks.getMockThread({
+      getId: () => 'thread-3',
+      getFirstMessageSubject: () => 'AI Fail Subject',
+      getMessages: () => [Mocks.getMockMessage({ getDate: () => new Date() })],
+      removeLabel: jest.fn(),
+      addLabel: jest.fn(),
+    });
+
+    const mockConfig = {
+      unprocessed_label: 'unprocessed',
+      processed_label: 'processed',
+      max_threads: 50,
+    };
+    (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
+
+    (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(null);
+    (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
+
+    const unprocessedLabel = { getThreads: () => [mockThread] };
+    global.GmailApp = {
+      getUserLabelByName: jest.fn((name: string) => {
+        if (name === 'unprocessed') return unprocessedLabel as any;
+        return { getName: () => name } as any;
+      }),
+    } as any;
+
+    // Execute
+    Processor.processAllUnprocessedThreads();
+
+    // Verify
+    expect(TasksManager.upsertTask).not.toHaveBeenCalled();
+    expect(mockThread.removeLabel).not.toHaveBeenCalled();
+    expect(mockThread.addLabel).not.toHaveBeenCalled();
+  });
+
   it('should not create a task and mark as unread if the email is not actionable', () => {
     // Setup
     const mockThread = Mocks.getMockThread({
