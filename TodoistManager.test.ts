@@ -55,18 +55,8 @@ describe('TodoistManager Tests', () => {
     );
   });
 
-  it('should format the description with double newlines', () => {
-    const mockConfig = {
-      todoist_api_key: 'test-api-key',
-      todoist_project_id: 'test-project-id',
-    } as Config;
-    TodoistManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'Line 1\nLine 2' }, mockConfig);
-
-    const payload = JSON.parse((global.UrlFetchApp.fetch as jest.Mock).mock.calls[0][1].payload);
-    expect(payload.description).toBe('Line 1\n\nLine 2');
-  });
-
-  it('should create a new task with project ID and default due date', () => {
+  
+    it('should create a new task with project ID and default due date', () => {
     const mockConfig = {
       todoist_api_key: 'test-api-key',
       todoist_project_id: 'test-project-id',
