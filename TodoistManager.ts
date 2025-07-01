@@ -25,11 +25,16 @@ export class TodoistManager {
   ): boolean {
     const threadId = thread.getId();
     const permalink = `https://mail.google.com/mail/u/0/#inbox/${threadId}`;
-    const content = `[${taskDetails.title}](${permalink})`;
+    const subject = thread.getFirstMessageSubject();
+    const description = `${taskDetails.notes}
+
+---
+
+Original email: [${subject}](${permalink})`;
 
     const taskData: any = {
-      content: content,
-      description: taskDetails.notes,
+      content: taskDetails.title,
+      description: description,
       due_string: 'today',
     };
 

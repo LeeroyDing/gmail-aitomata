@@ -26,6 +26,7 @@ describe('TodoistManager Tests', () => {
   const mockThread = Mocks.getMockThread({
     getId: () => 'thread-123',
     getPermalink: () => 'https://mail.google.com/mail/u/0/#inbox/thread-123',
+    getFirstMessageSubject: () => 'Test Subject',
   });
 
   beforeEach(() => {
@@ -65,8 +66,8 @@ describe('TodoistManager Tests', () => {
 
     const payload = JSON.parse((global.UrlFetchApp.fetch as jest.Mock).mock.calls[0][1].payload);
     expect(payload).toEqual({
-      content: '[New Task Title](https://mail.google.com/mail/u/0/#inbox/thread-123)',
-      description: 'New Notes',
+      content: 'New Task Title',
+      description: 'New Notes\n\n---\n\nOriginal email: [Test Subject](https://mail.google.com/mail/u/0/#inbox/thread-123)',
       due_string: 'today',
       project_id: 'test-project-id',
     });
@@ -81,8 +82,8 @@ describe('TodoistManager Tests', () => {
 
     const payload = JSON.parse((global.UrlFetchApp.fetch as jest.Mock).mock.calls[0][1].payload);
     expect(payload).toEqual({
-      content: '[New Task Title](https://mail.google.com/mail/u/0/#inbox/thread-123)',
-      description: 'New Notes',
+      content: 'New Task Title',
+      description: 'New Notes\n\n---\n\nOriginal email: [Test Subject](https://mail.google.com/mail/u/0/#inbox/thread-123)',
       due_string: 'today',
     });
   });
