@@ -119,7 +119,7 @@ export class GoogleTasksManager {
         console.log(`Creating new task`);
         Tasks.Tasks.insert(taskData, taskListId);
       }
-    } catch (e).
+    } catch (e) {
       console.error(`Failed to upsert task for thread ${threadId}: ${e}`);
       Logger.log(`Failed to upsert task for thread ${threadId}: ${e}`);
     }
@@ -135,14 +135,14 @@ export class GoogleTasksManager {
     try {
       do {
         const response: GoogleAppsScript.Tasks.Schema.Tasks = Tasks.Tasks.list(taskListId, {
-          showCompleted: false,
+          showCompleted: false, // Only search active tasks
           pageToken: pageToken,
         });
 
         if (response && response.items) {
           for (const task of response.items) {
             if (task.notes && task.notes.includes(`gmail_thread_id: ${threadId}`)) {
-              return task;
+              return task; // Return the first active task found
             }
           }
         }

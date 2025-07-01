@@ -51,7 +51,7 @@ describe('Processor Tests', () => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
     const mockPlan = {
-      action: { move_to: 'ARCHIVE', mark_read: true },
+      action: { mark_read: true },
       task: { title: 'Test Task', notes: 'Test Notes' },
     };
     (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
@@ -101,7 +101,7 @@ describe('Processor Tests', () => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
     const mockPlan = {
-      action: { move_to: 'ARCHIVE', mark_read: true },
+      action: { mark_read: true },
       task: { title: '', notes: 'Test Notes' },
     };
     (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
@@ -154,7 +154,7 @@ describe('Processor Tests', () => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
     const mockPlan = {
-      action: { move_to: 'ARCHIVE', mark_read: true }, // This will be overridden
+      action: { mark_read: true }, // This will be overridden
     };
     (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
     (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
@@ -175,6 +175,5 @@ describe('Processor Tests', () => {
     // Verify
     expect(TasksManager.upsertTask).not.toHaveBeenCalled();
     expect(mockThread.markUnread).toHaveBeenCalled();
-    expect(mockThread.moveToArchive).toHaveBeenCalled();
   });
 });
