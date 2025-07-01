@@ -80,7 +80,7 @@ export class AIAnalyzer {
 
     const prompt = `
       **SYSTEM PROMPT:**
-      You are an assistant helping me manage my email. Analyze the following email conversation based on my personal context and generate a JSON "Plan of Action".
+      You are an assistant helping me manage my email. Analyze the following email conversation based on my personal context and generate a "Plan of Action".
 
       **MY CONTEXT:**
       ---
@@ -93,7 +93,7 @@ export class AIAnalyzer {
       ---
 
       **YOUR TASK:**
-      Generate a JSON "Plan of Action".
+      Generate a "Plan of Action".
       If the email is actionable, create a task. Otherwise, do not include the "task" object.
       The "title" and "notes" fields must not be null or empty if the task is present.
     `;
