@@ -8,6 +8,8 @@ Gmail Automata is an AI-powered assistant that helps you manage your inbox by au
 
 The script works by labeling all incoming emails as "unprocessed." It then runs automatically every 5 minutes, scanning for these emails, generating a task with an AI-powered summary, and then marking the email as "processed."
 
+A key feature of this script is its ability to track conversations. If you receive new messages in a thread that already has a task, the script will update the existing task with a summary of the new messages. This ensures that your task always has the latest context from the email conversation.
+
 If any error occurs during the process, the email is moved to your inbox and labeled as "error," so you can easily identify and address any issues.
 
 ## Setup
