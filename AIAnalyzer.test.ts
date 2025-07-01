@@ -61,7 +61,7 @@ describe('AIAnalyzer Tests', () => {
     const mockMessages = [Mocks.getMockMessage({ subject: 'Test Subject', plainBody: 'Test Body' })];
     const mockContext = 'Test Context';
     const mockPlan: PlanOfAction = {
-      task: { title: 'Test Task', notes: 'Test Notes' },
+      task: { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31' },
     };
 
     (global.UrlFetchApp.fetch as jest.Mock).mockImplementation((url, params) => {

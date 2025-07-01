@@ -34,14 +34,18 @@ export class TodoistManager {
     };
 
     try {
-      const response = UrlFetchApp.fetch(`https://api.todoist.com/sync/v9/activity/get?object_type=item&event_type=completed&object_id=${subject}`, requestOptions);
+      const response = UrlFetchApp.fetch('https://api.todoist.com/api/v1/activities', requestOptions);
       const responseCode = response.getResponseCode();
       const responseBody = response.getContentText();
 
       if (responseCode === 200) {
         const jsonResponse = JSON.parse(responseBody);
-        if (jsonResponse.events && jsonResponse.events.length > 0) {
-          return jsonResponse.events[0].event_date;
+        if (jsonResponse && jsonResponse.length > 0) {
+          for (const event of jsonResponse) {
+            if (event.event_type === 'completed' && event.extra_data && event.extra_data.content === subject) {
+              return event.event_date;
+            }
+          }
         }
       } else {
         console.error(`Failed to get activity from Todoist. Response code: ${responseCode}, body: ${responseBody}`);
@@ -72,8 +76,11 @@ Original email: [${subject}](${permalink})`;
     const taskData: any = {
       content: taskDetails.title,
       description: description,
-      due_string: 'today',
     };
+
+    if (taskDetails.due_date && /^\d{4}-\d{2}-\d{2}$/.test(taskDetails.due_date)) {
+      taskData.due_date = taskDetails.due_date;
+    }
 
     if (config.todoist_project_id) {
       taskData.project_id = config.todoist_project_id;

@@ -89,6 +89,22 @@ describe('GoogleTasksManager Tests', () => {
     );
   });
 
+  it('should create a new task with a due date', () => {
+    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [] });
+    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({
+      items: [Mocks.getMockTaskList({ title: 'My Tasks', id: 'task-list-id-123' })],
+    });
+
+    GoogleTasksManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes', due_date: '2025-12-31' }, mockConfig);
+
+    expect(global.Tasks.Tasks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        due: '2025-12-31T00:00:00.000Z',
+      }),
+      'task-list-id-123'
+    );
+  });
+
   it('should update an existing task if found', () => {
     const existingTask = Mocks.getMockTask({ id: 'task-abc', notes: 'gmail_thread_id: thread-123' });
     (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [existingTask] });
