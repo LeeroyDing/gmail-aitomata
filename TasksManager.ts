@@ -33,11 +33,11 @@ export class TasksManager {
     thread: GoogleAppsScript.Gmail.GmailThread,
     taskDetails: NonNullable<PlanOfAction['task']>,
     config: Config
-  ) {
+  ): boolean {
     if (config.task_service === 'Todoist') {
-      TodoistManager.upsertTask(thread, taskDetails, config);
+      return TodoistManager.upsertTask(thread, taskDetails, config);
     } else {
-      GoogleTasksManager.upsertTask(thread, taskDetails, config);
+      return GoogleTasksManager.upsertTask(thread, taskDetails, config);
     }
   }
 }

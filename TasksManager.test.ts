@@ -54,6 +54,34 @@ describe('TasksManager Tests', () => {
     expect(GoogleTasksManager.upsertTask).not.toHaveBeenCalled();
   });
 
+  it('should return true when GoogleTasksManager returns true', () => {
+    const mockConfig = { task_service: 'Google Tasks' } as Config;
+    (GoogleTasksManager.upsertTask as jest.Mock).mockReturnValue(true);
+    const result = TasksManager.upsertTask(mockThread, mockTaskDetails, mockConfig);
+    expect(result).toBe(true);
+  });
+
+  it('should return false when GoogleTasksManager returns false', () => {
+    const mockConfig = { task_service: 'Google Tasks' } as Config;
+    (GoogleTasksManager.upsertTask as jest.Mock).mockReturnValue(false);
+    const result = TasksManager.upsertTask(mockThread, mockTaskDetails, mockConfig);
+    expect(result).toBe(false);
+  });
+
+  it('should return true when TodoistManager returns true', () => {
+    const mockConfig = { task_service: 'Todoist' } as Config;
+    (TodoistManager.upsertTask as jest.Mock).mockReturnValue(true);
+    const result = TasksManager.upsertTask(mockThread, mockTaskDetails, mockConfig);
+    expect(result).toBe(true);
+  });
+
+  it('should return false when TodoistManager returns false', () => {
+    const mockConfig = { task_service: 'Todoist' } as Config;
+    (TodoistManager.upsertTask as jest.Mock).mockReturnValue(false);
+    const result = TasksManager.upsertTask(mockThread, mockTaskDetails, mockConfig);
+    expect(result).toBe(false);
+  });
+
   it('should call GoogleTasksManager.findCheckpoint when task_service is "Google Tasks"', () => {
     const mockConfig = { task_service: 'Google Tasks' } as Config;
     TasksManager.findCheckpoint('thread-123', mockConfig);

@@ -56,6 +56,7 @@ describe('Processor Tests', () => {
     };
     (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
     (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
+    (TasksManager.upsertTask as jest.Mock).mockReturnValue(true);
 
     const unprocessedLabel = { getThreads: () => [mockThread] };
     const processedLabel = { getName: () => 'processed' };

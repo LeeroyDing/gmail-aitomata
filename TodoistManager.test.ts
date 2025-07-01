@@ -32,6 +32,16 @@ describe('TodoistManager Tests', () => {
     global.UrlFetchApp.fetch.mockClear();
   });
 
+  it('should return true on successful task creation', () => {
+    const mockConfig = {
+      todoist_api_key: 'test-api-key',
+      todoist_project_id: 'test-project-id',
+    } as Config;
+    (global.UrlFetchApp.fetch as jest.Mock).mockReturnValue(Mocks.getMockUrlFetchResponse(200, ''));
+    const result = TodoistManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
+    expect(result).toBe(true);
+  });
+
   it('should create a new task with project ID and default due date', () => {
     const mockConfig = {
       todoist_api_key: 'test-api-key',

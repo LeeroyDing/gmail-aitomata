@@ -68,7 +68,12 @@ export class Processor {
         plan.task.title = thread.getFirstMessageSubject();
       }
       Logger.log(`Creating task for thread ${threadId}: ${plan.task.title}`);
-      TasksManager.upsertTask(thread, plan.task, config);
+      const taskCreated = TasksManager.upsertTask(thread, plan.task, config);
+      if (!taskCreated) {
+        // If the task creation fails, leave the email unread and do not mark as processed.
+        plan.action.mark_read = false;
+        return;
+      }
     } else {
       // If no task, leave the email unread
       plan.action.mark_read = false;

@@ -22,7 +22,7 @@ export class TodoistManager {
     thread: GoogleAppsScript.Gmail.GmailThread,
     taskDetails: NonNullable<PlanOfAction['task']>,
     config: Config
-  ) {
+  ): boolean {
     const threadId = thread.getId();
     const permalink = `https://mail.google.com/mail/u/0/#inbox/${threadId}`;
     const content = `[${taskDetails.title}](${permalink})`;
@@ -65,13 +65,16 @@ export class TodoistManager {
 
       if (responseCode === 200) {
         console.log('Task created successfully in Todoist.');
+        return true;
       } else {
         console.error(`Failed to create task in Todoist. Response code: ${responseCode}, body: ${responseBody}`);
         Logger.log(`Failed to create task in Todoist. Response code: ${responseCode}, body: ${responseBody}`);
+        return false;
       }
     } catch (e) {
       console.error(`Failed to call Todoist API: ${e}`);
       Logger.log(`Failed to call Todoist API: ${e}`);
+      return false;
     }
   }
 }

@@ -58,6 +58,20 @@ describe('GoogleTasksManager Tests', () => {
     expect(checkpoint).toBe(null);
   });
 
+  it('should return true on successful task creation', () => {
+    (global.Tasks.Tasks.insert as jest.Mock).mockReturnValue({});
+    const result = GoogleTasksManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
+    expect(result).toBe(true);
+  });
+
+  it('should return false on failed task creation', () => {
+    (global.Tasks.Tasks.insert as jest.Mock).mockImplementation(() => {
+      throw new Error('API Error');
+    });
+    const result = GoogleTasksManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
+    expect(result).toBe(false);
+  });
+
   it('should create a new task if none exists', () => {
     (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [] });
     (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({

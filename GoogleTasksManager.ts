@@ -96,9 +96,9 @@ export class GoogleTasksManager {
     thread: GoogleAppsScript.Gmail.GmailThread,
     taskDetails: NonNullable<PlanOfAction['task']>,
     config: Config
-  ) {
+  ): boolean {
     if (!Tasks || !Tasks.Tasks) {
-      return;
+      return false;
     }
     const threadId = thread.getId();
     const taskListId = this.getTaskListId(config);
@@ -113,15 +113,19 @@ export class GoogleTasksManager {
 
     try {
       if (existingTask && existingTask.id) {
+        // Update existing task
         console.log(`Updating existing task ${existingTask.id}`);
         Tasks.Tasks.patch(taskData, taskListId, existingTask.id);
       } else {
+        // Create new task
         console.log(`Creating new task`);
         Tasks.Tasks.insert(taskData, taskListId);
       }
+      return true;
     } catch (e) {
       console.error(`Failed to upsert task for thread ${threadId}: ${e}`);
       Logger.log(`Failed to upsert task for thread ${threadId}: ${e}`);
+      return false;
     }
   }
 
