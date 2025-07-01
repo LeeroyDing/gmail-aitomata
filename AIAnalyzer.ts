@@ -20,13 +20,9 @@ import { Config } from './Config';
  * Defines the structure of the "Plan of Action" that the AI should return.
  */
 export interface PlanOfAction {
-  action: {
-    mark_read: boolean;
-  };
   task?: {
     title: string;
     notes: string;
-    due_date?: string; // YYYY-MM-DD format
   };
 }
 
@@ -94,6 +90,7 @@ export class AIAnalyzer {
       Generate a "Plan of Action".
       If the email is actionable, create a task. Otherwise, do not include the "task" object.
       The "title" and "notes" fields must not be null or empty if the task is present.
+      ${config.task_service === 'Todoist' ? 'The "notes" field should be in proper Markdown format.' : ''}
     `;
 
     const requestOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
@@ -106,20 +103,13 @@ export class AIAnalyzer {
           response_schema: {
             type: "OBJECT",
             properties: {
-              action: {
-                type: "OBJECT",
-                properties: {
-                  mark_read: { type: "BOOLEAN" },
-                },
-              },
               task: {
-                type: "OBJECT",
-                properties: {
-                  title: { type: "STRING" },
-                  notes: { type: "STRING" },
-                  due_date: { type: "STRING" },
-                },
-              },
+        type: "OBJECT",
+        properties: {
+          title: { type: "STRING" },
+          notes: { type: "STRING" },
+        },
+      },
             },
           },
         }

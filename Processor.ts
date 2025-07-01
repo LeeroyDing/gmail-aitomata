@@ -63,25 +63,29 @@ export class Processor {
 
     // 4. Execute the plan.
     Logger.log(`AI plan for thread ${threadId}: ${JSON.stringify(plan)}`);
+    let markRead = false;
+
     if (plan.task) {
       if (!plan.task.title) {
         plan.task.title = thread.getFirstMessageSubject();
       }
       Logger.log(`Creating task for thread ${threadId}: ${plan.task.title}`);
       const taskCreated = TasksManager.upsertTask(thread, plan.task, config);
-      if (!taskCreated) {
+      if (taskCreated) {
+        markRead = true;
+      } else {
         // If the task creation fails, leave the email unread and do not mark as processed.
-        plan.action.mark_read = false;
+        Logger.log(`Task creation failed for thread ${threadId}. Leaving email as unread.`);
         return;
       }
     } else {
       // If no task, leave the email unread
-      plan.action.mark_read = false;
+      Logger.log(`No task created for thread ${threadId}. Leaving email as unread.`);
     }
 
     
 
-    if (plan.action.mark_read) {
+    if (markRead) {
       Logger.log(`Marking thread ${threadId} as read.`);
       thread.markRead();
     } else {

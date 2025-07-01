@@ -108,7 +108,6 @@ export class GoogleTasksManager {
     const taskData: Task = {
       title: taskDetails.title,
       notes: this.formatTaskNotes(taskDetails.notes, threadId),
-      due: taskDetails.due_date ? `${taskDetails.due_date}T00:00:00.000Z` : undefined,
     };
 
     try {

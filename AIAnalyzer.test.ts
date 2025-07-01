@@ -61,7 +61,6 @@ describe('AIAnalyzer Tests', () => {
     const mockMessages = [Mocks.getMockMessage({ subject: 'Test Subject', plainBody: 'Test Body' })];
     const mockContext = 'Test Context';
     const mockPlan: PlanOfAction = {
-      action: { mark_read: true },
       task: { title: 'Test Task', notes: 'Test Notes' },
     };
 
@@ -83,9 +82,7 @@ describe('AIAnalyzer Tests', () => {
   it('should generate a plan without a task if the email is not actionable', () => {
     const mockMessages = [Mocks.getMockMessage({ subject: 'Non-Actionable', plainBody: 'FYI only' })];
     const mockContext = 'Test Context';
-    const mockPlan: PlanOfAction = {
-      action: { mark_read: true },
-    };
+    const mockPlan: PlanOfAction = {};
 
     (global.UrlFetchApp.fetch as jest.Mock).mockImplementation((url, params) => {
       return Mocks.getMockUrlFetchResponse(200, JSON.stringify({

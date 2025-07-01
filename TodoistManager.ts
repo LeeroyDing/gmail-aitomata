@@ -30,22 +30,11 @@ export class TodoistManager {
     const taskData: any = {
       content: content,
       description: taskDetails.notes,
-      due_string: 'today', // Default due date
+      due_string: 'today',
     };
 
     if (config.todoist_project_id) {
       taskData.project_id = config.todoist_project_id;
-    }
-
-    if (taskDetails.due_date) {
-      // Check if due_date is a valid YYYY-MM-DD date
-      if (/^\d{4}-\d{2}-\d{2}$/.test(taskDetails.due_date)) {
-        taskData.due_date = taskDetails.due_date;
-        delete taskData.due_string; // Remove default if a valid date is provided
-      } else {
-        // If not a valid date, use it as a string (e.g., "next week")
-        taskData.due_string = taskDetails.due_date;
-      }
     }
 
     const requestOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
@@ -59,7 +48,7 @@ export class TodoistManager {
     };
 
     try {
-      const response = UrlFetchApp.fetch('https://api.todoist.com/rest/v2/tasks', requestOptions);
+      const response = UrlFetchApp.fetch('https://api.todoist.com/api/v1/tasks', requestOptions);
       const responseCode = response.getResponseCode();
       const responseBody = response.getContentText();
 
