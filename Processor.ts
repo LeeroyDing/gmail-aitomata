@@ -62,10 +62,12 @@ export class Processor {
     }
 
     // 4. Execute the plan.
+    Logger.log(`AI plan for thread ${threadId}: ${JSON.stringify(plan)}`);
     if (plan.task) {
       if (!plan.task.title) {
         plan.task.title = thread.getFirstMessageSubject();
       }
+      Logger.log(`Creating task for thread ${threadId}: ${plan.task.title}`);
       TasksManager.upsertTask(thread, plan.task, config);
     } else {
       // If no task, leave the email unread
@@ -75,8 +77,10 @@ export class Processor {
     
 
     if (plan.action.mark_read) {
+      Logger.log(`Marking thread ${threadId} as read.`);
       thread.markRead();
     } else {
+      Logger.log(`Marking thread ${threadId} as unread.`);
       thread.markUnread();
     }
 

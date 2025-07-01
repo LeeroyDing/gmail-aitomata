@@ -27,12 +27,26 @@ export class TodoistManager {
     const permalink = `https://mail.google.com/mail/u/0/#inbox/${threadId}`;
     const content = `[${taskDetails.title}](${permalink})`;
 
-    const taskData = {
+    const taskData: any = {
       content: content,
       description: taskDetails.notes,
-      project_id: config.todoist_project_id,
-      due_string: taskDetails.due_date || 'today',
+      due_string: 'today', // Default due date
     };
+
+    if (config.todoist_project_id) {
+      taskData.project_id = config.todoist_project_id;
+    }
+
+    if (taskDetails.due_date) {
+      // Check if due_date is a valid YYYY-MM-DD date
+      if (/^\d{4}-\d{2}-\d{2}$/.test(taskDetails.due_date)) {
+        taskData.due_date = taskDetails.due_date;
+        delete taskData.due_string; // Remove default if a valid date is provided
+      } else {
+        // If not a valid date, use it as a string (e.g., "next week")
+        taskData.due_string = taskDetails.due_date;
+      }
+    }
 
     const requestOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
       method: 'post',
