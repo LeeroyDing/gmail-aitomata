@@ -11,5 +11,6 @@ The script now intelligently analyzes incoming emails to determine if they are a
 - Create Tasks Only for Actionable Emails.
 - Remove "AI Summary" from Task Notes.
 - Use `generationConfig` instead of prompt to specify output format for Gemini API output.
+- Remove the ability to move emails back to inbox (remove `InboxAction`).
 - Add Todoist support.
   - New settings should be added to the configs sheet to let you select your preferred task service (`task_service`) and provide your Todoist API key (`todoist_api_key`) and project ID (`todoist_project_id`).
