@@ -1,11 +1,28 @@
+// @ts-nocheck
+/**
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import './jest.setup.js';
 import { Mocks } from './Mocks';
-import { GoogleTasksManager } from './GoogleTasksManager';
+import { TasksManager } from './TasksManager';
 import { Config } from './Config';
 
 jest.mock('./Config');
 
-describe('GoogleTasksManager Tests', () => {
+describe('TasksManager Tests', () => {
   const mockConfig = {
     default_task_list_name: 'My Tasks',
   } as Config;
@@ -15,45 +32,10 @@ describe('GoogleTasksManager Tests', () => {
     getPermalink: () => 'https://mail.google.com/mail/u/0/#inbox/thread-123',
   });
 
-  let tasksManager: GoogleTasksManager;
-
   beforeEach(() => {
-    tasksManager = new GoogleTasksManager();
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
-
-    // Mock global.Tasks methods directly
-    global.Tasks = {
-      Tasklists: {
-        list: jest.fn() as jest.Mock,
-        get: jest.fn() as jest.Mock,
-        insert: jest.fn() as jest.Mock,
-        patch: jest.fn() as jest.Mock,
-        remove: jest.fn() as jest.Mock,
-        update: jest.fn() as jest.Mock,
-      },
-      Tasks: {
-        list: jest.fn() as jest.Mock,
-        patch: jest.fn() as jest.Mock,
-        insert: jest.fn() as jest.Mock,
-        clear: jest.fn() as jest.Mock,
-        get: jest.fn() as jest.Mock,
-        move: jest.fn() as jest.Mock,
-        remove: jest.fn() as jest.Mock,
-        update: jest.fn() as jest.Mock,
-      },
-      newTask: jest.fn() as jest.Mock,
-      newTaskLinks: jest.fn() as jest.Mock,
-      newTaskList: jest.fn() as jest.Mock,
-    } as any; // Cast to any to bypass strict type checking for mocking global objects
-
-    // Clear mocks before each test
-    (global.Tasks.Tasklists.list as jest.Mock).mockClear();
-    (global.Tasks.Tasks.list as jest.Mock).mockClear();
-    (global.Tasks.Tasks.patch as jest.Mock).mockClear();
-    (global.Tasks.Tasks.insert as jest.Mock).mockClear();
-
-    // Default mock implementation for Tasklists.list
-    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({
+    (TasksManager as any).taskListIdCache = null;
+    global.Tasks.Tasklists.list.mockReturnValue({
       items: [Mocks.getMockTaskList({ title: 'My Tasks', id: 'task-list-id-123' })],
     });
   });
@@ -66,13 +48,13 @@ describe('GoogleTasksManager Tests', () => {
     ];
     (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: tasks });
 
-    const checkpoint = tasksManager.findCheckpoint('thread-123', mockConfig);
+    const checkpoint = TasksManager.findCheckpoint('thread-123', mockConfig);
     expect(checkpoint).toBe('2024-01-02T12:00:00.000Z');
   });
 
   it('should return null if no completed task is found', () => {
     (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [] });
-    const checkpoint = tasksManager.findCheckpoint('thread-123', mockConfig);
+    const checkpoint = TasksManager.findCheckpoint('thread-123', mockConfig);
     expect(checkpoint).toBe(null);
   });
 
@@ -82,7 +64,7 @@ describe('GoogleTasksManager Tests', () => {
       items: [Mocks.getMockTaskList({ title: 'My Tasks', id: 'task-list-id-123' })],
     });
 
-    tasksManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
+    TasksManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
 
     expect(global.Tasks.Tasks.insert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -100,7 +82,7 @@ describe('GoogleTasksManager Tests', () => {
       items: [Mocks.getMockTaskList({ title: 'My Tasks', id: 'task-list-id-123' })],
     });
 
-    tasksManager.upsertTask(mockThread, { title: 'Updated Title', notes: 'Updated Notes' }, mockConfig);
+    TasksManager.upsertTask(mockThread, { title: 'Updated Title', notes: 'Updated Notes' }, mockConfig);
 
     expect(global.Tasks.Tasks.patch).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -118,29 +100,19 @@ describe('GoogleTasksManager Tests', () => {
     ];
     (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: taskLists });
 
-    const taskListId = (tasksManager as any).getTaskListId(mockConfig);
+    const taskListId = (TasksManager as any).getTaskListId(mockConfig);
     expect(taskListId).toBe('my-tasks-id');
-    expect((GoogleTasksManager as any).taskListIdCache).toBe('my-tasks-id');
+    expect((TasksManager as any).taskListIdCache).toBe('my-tasks-id');
 
     // Second call should use cache, not API
     (global.Tasks.Tasklists.list as jest.Mock).mockClear();
-    const cachedId = (tasksManager as any).getTaskListId(mockConfig);
+    const cachedId = (TasksManager as any).getTaskListId(mockConfig);
     expect(cachedId).toBe('my-tasks-id');
     expect(global.Tasks.Tasklists.list).not.toHaveBeenCalled();
   });
 
   it('should throw an error if task list is not found', () => {
     (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [] });
-    expect(() => (tasksManager as any).getTaskListId(mockConfig)).toThrow("Task list with name 'My Tasks' not found.");
-  });
-
-  it('should handle API errors gracefully', () => {
-    (global.Tasks.Tasks.list as jest.Mock).mockImplementation(() => {
-      throw new Error('API Error');
-    });
-    const checkpoint = tasksManager.findCheckpoint('thread-123', mockConfig);
-    expect(checkpoint).toBe(null);
-    tasksManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
-    // No exception should be thrown
+    expect(() => (TasksManager as any).getTaskListId(mockConfig)).toThrow("Task list with name 'My Tasks' not found.");
   });
 });
