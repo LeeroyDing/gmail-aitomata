@@ -15,14 +15,12 @@
  */
 
 import { Config } from './Config';
-import { InboxAction } from './Processor';
 
 /**
  * Defines the structure of the "Plan of Action" that the AI should return.
  */
 export interface PlanOfAction {
   action: {
-    move_to: InboxAction;
     mark_read: boolean;
   };
   task?: {
@@ -111,7 +109,6 @@ export class AIAnalyzer {
               action: {
                 type: "OBJECT",
                 properties: {
-                  move_to: { type: "STRING", enum: ["ARCHIVE", "TRASH", "INBOX"] },
                   mark_read: { type: "BOOLEAN" },
                 },
               },

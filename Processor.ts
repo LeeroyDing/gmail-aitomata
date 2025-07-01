@@ -19,8 +19,7 @@ import { Stats } from './Stats';
 import { AIAnalyzer } from './AIAnalyzer';
 import { TasksManager } from './TasksManager';
 
-// Define the possible inbox actions as a type
-export type InboxAction = "ARCHIVE" | "TRASH" | "INBOX";
+
 
 export class Processor {
   /**
@@ -73,18 +72,7 @@ export class Processor {
       plan.action.mark_read = false;
     }
 
-    // Apply inbox actions
-    switch (plan.action.move_to) {
-      case 'ARCHIVE':
-        thread.moveToArchive();
-        break;
-      case 'TRASH':
-        thread.moveToTrash();
-        break;
-      case 'INBOX':
-        thread.moveToInbox();
-        break;
-    }
+    
 
     if (plan.action.mark_read) {
       thread.markRead();
