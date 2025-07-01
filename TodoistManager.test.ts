@@ -57,7 +57,39 @@ describe('TodoistManager Tests', () => {
   });
 
   
-    it('should create a new task with project ID and default due date', () => {
+    it('should find the latest checkpoint from the activity log', () => {
+    const mockConfig = {
+      todoist_api_key: 'test-api-key',
+    } as Config;
+    const mockActivity = {
+      events: [
+        { event_date: '2024-01-02T12:00:00.000Z' },
+        { event_date: '2024-01-01T12:00:00.000Z' },
+      ],
+    };
+    (global.UrlFetchApp.fetch as jest.Mock).mockReturnValue(Mocks.getMockUrlFetchResponse(200, JSON.stringify(mockActivity)));
+    global.GmailApp = {
+      getThreadById: jest.fn().mockReturnValue(mockThread),
+    } as any;
+
+    const checkpoint = TodoistManager.findCheckpoint('thread-123', mockConfig);
+    expect(checkpoint).toBe('2024-01-02T12:00:00.000Z');
+  });
+
+  it('should return null if no checkpoint is found', () => {
+    const mockConfig = {
+      todoist_api_key: 'test-api-key',
+    } as Config;
+    (global.UrlFetchApp.fetch as jest.Mock).mockReturnValue(Mocks.getMockUrlFetchResponse(200, JSON.stringify({ events: [] })));
+    global.GmailApp = {
+      getThreadById: jest.fn().mockReturnValue(mockThread),
+    } as any;
+
+    const checkpoint = TodoistManager.findCheckpoint('thread-123', mockConfig);
+    expect(checkpoint).toBe(null);
+  });
+
+  it('should create a new task with project ID and default due date', () => {
     const mockConfig = {
       todoist_api_key: 'test-api-key',
       todoist_project_id: 'test-project-id',

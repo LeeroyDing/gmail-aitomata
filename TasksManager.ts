@@ -22,9 +22,7 @@ import { TodoistManager } from './TodoistManager';
 export class TasksManager {
   public static findCheckpoint(threadId: string, config: Config): string | null {
     if (config.task_service === 'Todoist') {
-      // Todoist does not have a concept of checkpoints in the same way as Google Tasks.
-      // Returning null will cause all messages in the thread to be processed.
-      return null;
+      return TodoistManager.findCheckpoint(threadId, config);
     }
     return GoogleTasksManager.findCheckpoint(threadId, config);
   }

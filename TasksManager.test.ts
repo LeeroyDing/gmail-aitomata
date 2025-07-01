@@ -90,6 +90,7 @@ describe('TasksManager Tests', () => {
 
   it('should return null for findCheckpoint when task_service is "Todoist"', () => {
     const mockConfig = { task_service: 'Todoist' } as Config;
+    (TodoistManager.findCheckpoint as jest.Mock).mockReturnValue(null);
     const checkpoint = TasksManager.findCheckpoint('thread-123', mockConfig);
     expect(checkpoint).toBe(null);
   });

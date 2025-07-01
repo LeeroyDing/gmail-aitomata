@@ -18,6 +18,43 @@ import { Config } from './Config';
 import { PlanOfAction } from './AIAnalyzer';
 
 export class TodoistManager {
+  public static findCheckpoint(threadId: string, config: Config): string | null {
+    const thread = GmailApp.getThreadById(threadId);
+    if (!thread) {
+      return null;
+    }
+    const subject = thread.getFirstMessageSubject();
+    const requestOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+      method: 'get',
+      contentType: 'application/json',
+      headers: {
+        Authorization: `Bearer ${config.todoist_api_key}`,
+      },
+      muteHttpExceptions: true,
+    };
+
+    try {
+      const response = UrlFetchApp.fetch(`https://api.todoist.com/sync/v9/activity/get?object_type=item&event_type=completed&object_id=${subject}`, requestOptions);
+      const responseCode = response.getResponseCode();
+      const responseBody = response.getContentText();
+
+      if (responseCode === 200) {
+        const jsonResponse = JSON.parse(responseBody);
+        if (jsonResponse.events && jsonResponse.events.length > 0) {
+          return jsonResponse.events[0].event_date;
+        }
+      } else {
+        console.error(`Failed to get activity from Todoist. Response code: ${responseCode}, body: ${responseBody}`);
+        Logger.log(`Failed to get activity from Todoist. Response code: ${responseCode}, body: ${responseBody}`);
+      }
+    } catch (e) {
+      console.error(`Failed to call Todoist API: ${e}`);
+      Logger.log(`Failed to call Todoist API: ${e}`);
+    }
+
+    return null;
+  }
+
   public static upsertTask(
     thread: GoogleAppsScript.Gmail.GmailThread,
     taskDetails: NonNullable<PlanOfAction['task']>,
