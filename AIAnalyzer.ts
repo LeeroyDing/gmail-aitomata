@@ -99,7 +99,12 @@ export class AIAnalyzer {
       method: 'post',
       contentType: 'application/json',
       payload: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }],
+          },
+        ],
         generationConfig: {
           response_mime_type: "application/json",
           response_schema: {
