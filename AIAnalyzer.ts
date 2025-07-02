@@ -73,19 +73,9 @@ export class AIAnalyzer {
 
     const messageContent = this.formatMessagesForAI(messages);
 
-    const prompt = `
+    const systemPrompt = `
       **SYSTEM PROMPT:**
       You are an assistant helping me manage my email. Analyze the following email conversation based on my personal context and generate a "Plan of Action".
-
-      **MY CONTEXT:**
-      ---
-      ${context}
-      ---
-
-      **EMAIL CONTENT:**
-      ---
-      ${messageContent}
-      ---
 
       **YOUR TASK:**
       Generate a "Plan of Action".
@@ -95,14 +85,30 @@ export class AIAnalyzer {
       ${config.task_service === 'Todoist' ? 'The "notes" field should be in proper Markdown format.' : ''}
     `;
 
+    const userPrompt = `
+      **MY CONTEXT:**
+      ---
+      ${context}
+      ---
+
+      **EMAIL CONTENT:**
+      ---
+      ${messageContent}
+      ---
+    `;
+
     const requestOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
       method: 'post',
       contentType: 'application/json',
       payload: JSON.stringify({
         contents: [
           {
+            role: 'system',
+            parts: [{ text: systemPrompt }],
+          },
+          {
             role: 'user',
-            parts: [{ text: prompt }],
+            parts: [{ text: userPrompt }],
           },
         ],
         generationConfig: {
