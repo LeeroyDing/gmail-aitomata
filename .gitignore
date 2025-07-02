@@ -1,4 +1,4 @@
 build/
 node_modules/
 /.clasp.json
-.serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
+.serena/cache/typescript/*.pkl
