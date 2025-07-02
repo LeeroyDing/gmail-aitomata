@@ -1,8 +1,8 @@
 {
-  "name": "serena",
+  "name": "Serena",
   "version": "1.0.0",
   "mcpServers": {
-    "Serena": {
+    "serena": {
       "command": "uvx",
       "args": [
         "--from",
