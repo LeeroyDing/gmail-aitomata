@@ -77,6 +77,11 @@ export class AIAnalyzer {
       **SYSTEM PROMPT:**
       You are an assistant helping me manage my email. Analyze the following email conversation based on my personal context and generate a "Plan of Action".
 
+      **MY CONTEXT:**
+      ---
+      ${context}
+      ---
+
       **YOUR TASK:**
       Generate a "Plan of Action".
       If the email is actionable, create a task. Otherwise, do not include the "task" object.
@@ -86,11 +91,6 @@ export class AIAnalyzer {
     `;
 
     const userPrompt = `
-      **MY CONTEXT:**
-      ---
-      ${context}
-      ---
-
       **EMAIL CONTENT:**
       ---
       ${messageContent}

@@ -67,8 +67,8 @@ describe('AIAnalyzer Tests', () => {
     (global.UrlFetchApp.fetch as jest.Mock).mockImplementation((url, params) => {
       expect(url).toContain('gemini-2.5-flash:generateContent');
       const payload = JSON.parse(params.payload as string);
+      expect(payload.contents[0].parts[0].text).toContain('Test Context');
       expect(payload.contents[1].parts[0].text).toContain('Test Subject');
-      expect(payload.contents[1].parts[0].text).toContain('Test Context');
       
       return Mocks.getMockUrlFetchResponse(200, JSON.stringify({
         candidates: [{ content: { parts: [{ text: JSON.stringify(mockPlan) }] } }],
