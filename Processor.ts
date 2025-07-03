@@ -105,55 +105,67 @@ export class Processor {
    * Fetches and processes all unprocessed threads.
    */
   public static processAllUnprocessedThreads() {
-    const startTime = new Date();
-    const config = Config.getConfig();
-    const aiContext = AIAnalyzer.getContext(); // Assuming a static method to get context
-
-    const unprocessedLabel = GmailApp.getUserLabelByName(config.unprocessed_label);
-    if (!unprocessedLabel) {
-      throw new Error(`Label '${config.unprocessed_label}' not found. Please create it.`);
-    }
-    
-    if (config.processed_label) {
-      const processedLabel = GmailApp.getUserLabelByName(config.processed_label);
-      if (!processedLabel) {
-        throw new Error(`Label '${config.processed_label}' not found. Please create it.`);
-      }
-    }
-
-    const unprocessedThreads = unprocessedLabel.getThreads(0, config.max_threads);
-    Logger.log(`Found ${unprocessedThreads.length} unprocessed threads.`);
-    if (unprocessedThreads.length === 0) {
-      Logger.log(`All emails are processed, skip.`);
+    const lock = LockService.getScriptLock();
+    // Try to acquire the lock, waiting for a maximum of 10 seconds.
+    if (!lock.tryLock(10000)) {
+      console.log('Could not obtain lock. Another instance is likely running.');
+      Logger.log('Could not obtain lock. Another instance is likely running.');
       return;
     }
 
-    let processedThreadCount = 0;
-    let allPass = true;
+    try {
+      const startTime = new Date();
+      const config = Config.getConfig();
+      const aiContext = AIAnalyzer.getContext(); // Assuming a static method to get context
 
-    for (const thread of unprocessedThreads) {
-      try {
-        this.processThread(thread, config, aiContext);
-        processedThreadCount++;
-      } catch (e) {
-        allPass = false;
-        const threadId = thread.getId();
-        console.error(`Failed to process thread ${threadId}: ${e}`);
-        Logger.log(`Failed to process thread ${threadId}: ${e}`);
-        // Apply error label and move to inbox for visibility
-        const errorLabel = GmailApp.getUserLabelByName(config.processing_failed_label);
-        if (errorLabel) {
-          thread.addLabel(errorLabel);
-        }
-        thread.moveToInbox();
+      const unprocessedLabel = GmailApp.getUserLabelByName(config.unprocessed_label);
+      if (!unprocessedLabel) {
+        throw new Error(`Label '${config.unprocessed_label}' not found. Please create it.`);
       }
-    }
+      
+      if (config.processed_label) {
+        const processedLabel = GmailApp.getUserLabelByName(config.processed_label);
+        if (!processedLabel) {
+          throw new Error(`Label '${config.processed_label}' not found. Please create it.`);
+        }
+      }
 
-    Logger.log(`Processed ${processedThreadCount} out of ${unprocessedThreads.length}.`);
-    Stats.addStatRecord(startTime, processedThreadCount, 0); // message count is harder to get now
+      const unprocessedThreads = unprocessedLabel.getThreads(0, config.max_threads);
+      Logger.log(`Found ${unprocessedThreads.length} unprocessed threads.`);
+      if (unprocessedThreads.length === 0) {
+        Logger.log(`All emails are processed, skip.`);
+        return;
+      }
 
-    if (!allPass) {
-      throw new Error('Some threads failed to process. Please check the logs and your inbox for emails with the error label.');
+      let processedThreadCount = 0;
+      let allPass = true;
+
+      for (const thread of unprocessedThreads) {
+        try {
+          this.processThread(thread, config, aiContext);
+          processedThreadCount++;
+        } catch (e) {
+          allPass = false;
+          const threadId = thread.getId();
+          console.error(`Failed to process thread ${threadId}: ${e}`);
+          Logger.log(`Failed to process thread ${threadId}: ${e}`);
+          // Apply error label and move to inbox for visibility
+          const errorLabel = GmailApp.getUserLabelByName(config.processing_failed_label);
+          if (errorLabel) {
+            thread.addLabel(errorLabel);
+          }
+          thread.moveToInbox();
+        }
+      }
+
+      Logger.log(`Processed ${processedThreadCount} out of ${unprocessedThreads.length}.`);
+      Stats.addStatRecord(startTime, processedThreadCount, 0); // message count is harder to get now
+
+      if (!allPass) {
+        throw new Error('Some threads failed to process. Please check the logs and your inbox for emails with the error label.');
+      }
+    } finally {
+      lock.releaseLock();
     }
   }
 }
