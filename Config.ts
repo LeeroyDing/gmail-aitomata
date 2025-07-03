@@ -67,7 +67,7 @@ export class Config implements Readonly<MutableConfig> {
             task_service: "Google Tasks",
             todoist_api_key: "",
             todoist_project_id: "",
-            gemini_model: "gemini-pro",
+            gemini_model: "gemini-2.5-flash",
         };
 
         const values = Utils.withTimer("GetConfigValues", () => {
