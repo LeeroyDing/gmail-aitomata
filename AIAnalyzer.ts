@@ -86,7 +86,8 @@ export class AIAnalyzer {
       **YOUR TASK:**
       Generate a "Plan of Action".
       If the email is actionable, create a task. Otherwise, do not include the "task" object.
-      The "title" and "notes" fields must not be null or empty if the task is present.
+      The "title" should be a very short, easily glanceable summary of the required action (e.g., "Reply to Jane about the project deadline").
+      The "notes" fields must not be null or empty if the task is present.
       The "due_date" should be in YYYY-MM-DD format.
       The "priority" should be an integer from 1 (Urgent) to 4 (Normal).
       ${config.task_service === 'Todoist' ? 'The "notes" field should be in proper Markdown format.' : ''}
