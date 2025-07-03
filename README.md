@@ -1,6 +1,6 @@
 # Gmail Automata
 
-[![Build Status](https://travis-ci.com/ranmocy/gmail-automata.svg?branch=master)](https://travis-ci.com/ranmocy/gmail-automata)
+[![Test and deploy on main branch](https://github.com/LeeroyDing/gmail-aitomata/actions/workflows/main.yml/badge.svg)](https://github.com/LeeroyDing/gmail-aitomata/actions/workflows/main.yml)
 
 ## Introduction
 
