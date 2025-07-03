@@ -103,11 +103,9 @@ export class AIAnalyzer {
       payload: JSON.stringify({
         contents: [
           {
-            role: 'system',
             parts: [{ text: systemPrompt }],
           },
           {
-            role: 'user',
             parts: [{ text: userPrompt }],
           },
         ],
