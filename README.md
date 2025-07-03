@@ -20,6 +20,7 @@ If any error occurs during the process, the email is moved to your inbox and lab
     *   In the `configs` sheet, configure the following settings:
         *   `task_service`: Set to either "Google Tasks" or "Todoist".
         *   `GEMINI_API_KEY`: Your API key for the Generative Language API (for Gemini).
+        *   `gemini_model`: The specific Gemini model to use (e.g., "gemini-pro", "gemini-2.5-flash"). Defaults to "gemini-pro".
         *   If using Google Tasks:
             *   `default_task_list_name`: The name of your target Google Task list (e.g., "My Tasks").
         *   If using Todoist:

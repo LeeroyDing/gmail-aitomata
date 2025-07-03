@@ -69,7 +69,7 @@ export class AIAnalyzer {
       throw new Error("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
     }
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${config.gemini_model}:generateContent?key=${apiKey}`;
 
     const messageContent = this.formatMessagesForAI(messages);
 
