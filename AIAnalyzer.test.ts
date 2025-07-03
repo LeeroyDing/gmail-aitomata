@@ -24,7 +24,7 @@ jest.mock('./Config');
 describe('AIAnalyzer Tests', () => {
   const mockConfig = {
     GEMINI_API_KEY: 'test-api-key',
-    GEMINI_MODEL: 'gemini-2.5-flash',
+    gemini_model: 'gemini-2.5-flash',
     unprocessed_label: 'unprocessed',
     processed_label: 'processed',
     processing_failed_label: 'error',

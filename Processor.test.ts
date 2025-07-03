@@ -22,6 +22,27 @@ global.Logger = {
   getLog: jest.fn(),
 };
 
+global.LockService = {
+  getScriptLock: jest.fn(() => ({
+    tryLock: jest.fn(() => true),
+    releaseLock: jest.fn(),
+    hasLock: jest.fn(() => false),
+    waitLock: jest.fn(),
+  })),
+  getDocumentLock: jest.fn(() => ({
+    tryLock: jest.fn(() => true),
+    releaseLock: jest.fn(),
+    hasLock: jest.fn(() => false),
+    waitLock: jest.fn(),
+  })),
+  getUserLock: jest.fn(() => ({
+    tryLock: jest.fn(() => true),
+    releaseLock: jest.fn(),
+    hasLock: jest.fn(() => false),
+    waitLock: jest.fn(),
+  })),
+};
+
 describe('Processor Tests', () => {
   beforeEach(() => {
     // Reset mocks before each test

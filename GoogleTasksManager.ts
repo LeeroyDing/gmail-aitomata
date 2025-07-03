@@ -99,7 +99,7 @@ export class GoogleTasksManager {
     if (completedCheckpoint && activeTaskCheckpoint) {
         finalCheckpoint = new Date(completedCheckpoint) > new Date(activeTaskCheckpoint) ? completedCheckpoint : activeTaskCheckpoint;
     } else {
-        finalCheckpoint = completedCheckpoint || activeTaskCheckpoint;
+        finalCheckpoint = (completedCheckpoint || activeTaskCheckpoint) ?? null;
     }
     
     console.log(`Found checkpoint for thread ${threadId}: ${finalCheckpoint}`);
