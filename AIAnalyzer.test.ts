@@ -24,6 +24,18 @@ jest.mock('./Config');
 describe('AIAnalyzer Tests', () => {
   const mockConfig = {
     GEMINI_API_KEY: 'test-api-key',
+    GEMINI_MODEL: 'gemini-2.5-flash',
+    unprocessed_label: 'unprocessed',
+    processed_label: 'processed',
+    processing_failed_label: 'error',
+    processing_frequency_in_minutes: 5,
+    hour_of_day_to_run_sanity_checking: 0,
+    go_link: '',
+    max_threads: 50,
+    default_task_list_name: 'My Tasks',
+    task_service: 'Google Tasks',
+    todoist_api_key: '',
+    todoist_project_id: '',
   } as Config;
 
   beforeEach(() => {
@@ -67,8 +79,8 @@ describe('AIAnalyzer Tests', () => {
     (global.UrlFetchApp.fetch as jest.Mock).mockImplementation((url, params) => {
       expect(url).toContain('gemini-2.5-flash:generateContent');
       const payload = JSON.parse(params.payload as string);
-      expect(payload.contents[0].parts[0].text).toContain('Test Context');
-      expect(payload.contents[1].parts[0].text).toContain('Test Subject');
+      expect(payload.system_instruction.parts[0].text).toContain('Test Context');
+      expect(payload.contents[0].parts[0].text).toContain('Test Subject');
       
       return Mocks.getMockUrlFetchResponse(200, JSON.stringify({
         candidates: [{ content: { parts: [{ text: JSON.stringify(mockPlan) }] } }],

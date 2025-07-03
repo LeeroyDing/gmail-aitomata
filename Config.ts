@@ -45,7 +45,7 @@ export class Config implements Readonly<MutableConfig> {
     public readonly task_service: string;
     public readonly todoist_api_key: string;
     public readonly todoist_project_id: string;
-    public readonly gemini_model: string;
+    public readonly GEMINI_MODEL: string;
 
     private static validate(config: Config) {
         Utils.assert(config.unprocessed_label.length > 0, "unprocessed_label can't be empty");
@@ -66,7 +66,7 @@ export class Config implements Readonly<MutableConfig> {
             task_service: "Google Tasks",
             todoist_api_key: "",
             todoist_project_id: "",
-            gemini_model: "gemini-2.5-flash",
+            GEMINI_MODEL: "gemini-2.5-flash",
         };
 
         const values = Utils.withTimer("GetConfigValues", () => {
@@ -114,8 +114,7 @@ export class Config implements Readonly<MutableConfig> {
                 case "GEMINI_API_KEY":
                 case "task_service":
                 case "todoist_api_key":
-                case "todoist_project_id":
-                case "gemini_model": {
+                case "todoist_project_id": {
                     config[name] = value;
                     break;
                 }
