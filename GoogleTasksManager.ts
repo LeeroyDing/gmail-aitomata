@@ -60,8 +60,14 @@ export class GoogleTasksManager {
     if (!Tasks || !Tasks.Tasks) {
       return null;
     }
+    
+    // 1. Find active task and get its update time
+    const activeTask = this.findActiveTaskByThreadId(threadId, config);
+    const activeTaskCheckpoint = activeTask ? activeTask.updated : null;
+
+    // 2. Find latest completed task checkpoint
     const taskListId = this.getTaskListId(config);
-    let checkpoint: string | null = null;
+    let completedCheckpoint: string | null = null;
     let pageToken: string | undefined = undefined;
 
     try {
@@ -74,8 +80,8 @@ export class GoogleTasksManager {
         if (response && response.items) {
           for (const task of response.items) {
             if (task.notes && task.notes.includes(`gmail_thread_id: ${threadId}`) && task.completed) {
-              if (!checkpoint || new Date(task.completed) > new Date(checkpoint)) {
-                checkpoint = task.completed;
+              if (!completedCheckpoint || new Date(task.completed) > new Date(completedCheckpoint)) {
+                completedCheckpoint = task.completed;
               }
             }
           }
@@ -83,13 +89,21 @@ export class GoogleTasksManager {
         pageToken = response?.nextPageToken;
       } while (pageToken);
     } catch (e) {
-      console.error(`Failed to list tasks: ${e}`);
-      Logger.log(`Failed to list tasks: ${e}`);
-      return null; // Fail gracefully
+      console.error(`Failed to list completed tasks: ${e}`);
+      Logger.log(`Failed to list completed tasks: ${e}`);
+      // Continue with what we have
+    }
+
+    // 3. Determine the most recent checkpoint
+    let finalCheckpoint: string | null = null;
+    if (completedCheckpoint && activeTaskCheckpoint) {
+        finalCheckpoint = new Date(completedCheckpoint) > new Date(activeTaskCheckpoint) ? completedCheckpoint : activeTaskCheckpoint;
+    } else {
+        finalCheckpoint = completedCheckpoint || activeTaskCheckpoint;
     }
     
-    console.log(`Found checkpoint for thread ${threadId}: ${checkpoint}`);
-    return checkpoint;
+    console.log(`Found checkpoint for thread ${threadId}: ${finalCheckpoint}`);
+    return finalCheckpoint;
   }
 
   public static upsertTask(
