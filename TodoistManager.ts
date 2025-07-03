@@ -82,6 +82,11 @@ Original email: [${subject}](${permalink})`;
       taskData.due_date = taskDetails.due_date;
     }
 
+    if (taskDetails.priority) {
+        // Map AI priority (1-4) to Todoist API priority (4-1)
+        taskData.priority = 5 - taskDetails.priority;
+    }
+
     if (config.todoist_project_id) {
       taskData.project_id = config.todoist_project_id;
     }

@@ -119,8 +119,13 @@ export class GoogleTasksManager {
 
     const existingTask = this.findActiveTaskByThreadId(threadId, config);
 
+    let title = taskDetails.title;
+    if (taskDetails.priority) {
+        title = `[P${taskDetails.priority}] ${title}`
+    }
+
     const taskData: Task = {
-      title: taskDetails.title,
+      title: title,
       notes: this.formatTaskNotes(taskDetails.notes, threadId),
       due: taskDetails.due_date ? `${taskDetails.due_date}T00:00:00.000Z` : undefined,
     };

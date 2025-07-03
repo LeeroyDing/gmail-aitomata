@@ -24,6 +24,7 @@ export interface PlanOfAction {
     title: string;
     notes: string;
     due_date?: string; // YYYY-MM-DD format or natural language
+    priority?: number; // 1 (Urgent) to 4 (Normal)
   };
 }
 
@@ -87,6 +88,7 @@ export class AIAnalyzer {
       If the email is actionable, create a task. Otherwise, do not include the "task" object.
       The "title" and "notes" fields must not be null or empty if the task is present.
       The "due_date" should be in YYYY-MM-DD format.
+      The "priority" should be an integer from 1 (Urgent) to 4 (Normal).
       ${config.task_service === 'Todoist' ? 'The "notes" field should be in proper Markdown format.' : ''}
     `;
 
@@ -121,6 +123,7 @@ export class AIAnalyzer {
           title: { type: "STRING" },
           notes: { type: "STRING" },
           due_date: { type: "STRING" },
+          priority: { type: "NUMBER" },
         },
       },
             },
