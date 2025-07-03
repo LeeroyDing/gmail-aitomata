@@ -101,11 +101,12 @@ export class AIAnalyzer {
       method: 'post',
       contentType: 'application/json',
       payload: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: systemPrompt }],
+        },
         contents: [
           {
-            parts: [{ text: systemPrompt }],
-          },
-          {
+            role: 'user',
             parts: [{ text: userPrompt }],
           },
         ],
