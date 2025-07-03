@@ -29,7 +29,7 @@ export interface MutableConfig {
     task_service: string;
     todoist_api_key: string;
     todoist_project_id: string;
-    GEMINI_MODEL: string;
+    gemini_model: string;
 }
 
 export class Config implements Readonly<MutableConfig> {
