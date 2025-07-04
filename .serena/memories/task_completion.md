@@ -1,0 +1,1 @@
+When a task is completed, you should:\n1. Run `yarn test` to ensure all tests pass.\n2. If the tests pass, you can deploy the script using `yarn deploy`.

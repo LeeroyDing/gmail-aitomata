@@ -1,0 +1,1 @@
+- The project uses TypeScript with strict type checking enabled.\n- File names are in PascalCase (e.g., `AIAnalyzer.ts`).\n- Test files are named with the `.test.ts` suffix (e.g., `AIAnalyzer.test.ts`).\n- The project uses ES2019 as the target.

@@ -1,0 +1,1 @@
+The project is an AI-powered assistant that helps manage Gmail by automatically creating tasks in Google Tasks or Todoist for incoming emails. It summarizes emails, creates tasks, and tracks conversations.

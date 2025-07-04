@@ -1,0 +1,1 @@
+### Development\n- `yarn install`: Install dependencies.\n- `yarn test`: Run tests.\n\n### Deployment\n- `yarn claspLogin`: Log in to clasp.\n- `yarn deploy`: Deploy the script.\n- `yarn open`: Open the script in the browser.

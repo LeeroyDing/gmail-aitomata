@@ -1,0 +1,1 @@
+- The main logic is in `.ts` files in the root directory.\n- Tests are in `.test.ts` files in the root directory.\n- Configuration is in `Config.ts` and `appsscript.json`.\n- The `index.ts` file is likely the main entry point for the Google Apps Script.
