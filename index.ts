@@ -25,8 +25,8 @@ import { TasksManager } from './TasksManager';
 // String.startsWith polyfill
 if (!String.prototype.startsWith) {
     Object.defineProperty(String.prototype, 'startsWith', {
-        value: function (search: String, rawPos: number) {
-            var pos = rawPos > 0 ? rawPos | 0 : 0;
+        value: function (search: string, rawPos: number) {
+            const pos = rawPos > 0 ? rawPos | 0 : 0;
             return this.substring(pos, pos + search.length) === search;
         }
     });
@@ -46,18 +46,18 @@ if (!String.prototype.endsWith) {
 if (typeof Object.assign !== 'function') {
     // Must be writable: true, enumerable: false, configurable: true
     Object.defineProperty(Object, "assign", {
-        value: function assign(target: Object, _source1: Object, ..._sources: Array<Object>) { // .length of function is 2
+        value: function assign(target: object, _source1: object, ..._sources: Array<object>) { // .length of function is 2
             if (target === null || target === undefined) {
                 throw new TypeError('Cannot convert undefined or null to object');
             }
 
-            var to = Object(target);
+            const to = Object(target);
 
-            for (var index = 1; index < arguments.length; index++) {
-                var nextSource = arguments[index];
+            for (let index = 1; index < arguments.length; index++) {
+                const nextSource = arguments[index];
 
                 if (nextSource !== null && nextSource !== undefined) {
-                    for (var nextKey in nextSource) {
+                    for (const nextKey in nextSource) {
                         // Avoid bugs when hasOwnProperty is shadowed
                         if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
                             to[nextKey] = nextSource[nextKey];
@@ -115,7 +115,7 @@ function setupTriggers() {
     Utils.withFailureEmailed("setupTriggers", () => {
         const config = Utils.withTimer("getConfigs", () => Config.getConfig());
         Utils.withTimer("addingTriggers", () => {
-            let trigger = ScriptApp.newTrigger('processEmails')
+            const trigger = ScriptApp.newTrigger('processEmails')
                 .timeBased()
                 .everyMinutes(config.processing_frequency_in_minutes)
                 .create();
