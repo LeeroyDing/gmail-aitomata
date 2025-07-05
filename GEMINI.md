@@ -1,1 +1,1 @@
-To activate this project, use the command: `activate_project(project="gmail-aitomata")`
+Before performing any task, activate this project using the command: `activate_project(project="gmail-aitomata")`
