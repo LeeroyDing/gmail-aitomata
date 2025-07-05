@@ -1,31 +1,12 @@
-# Project: AI-Powered Gmail Automata
-
-## Objective
-Evolve the script from a static, rule-based system to an intelligent email assistant using an LLM to manage a to-do list in Google Tasks and organize the inbox.
-
-## Current Status
-The script intelligently analyzes incoming emails to determine if they are actionable. For actionable emails, it automatically creates a task in Google Tasks with an AI-generated title and summary. Non-actionable emails are left as unread, ensuring that only relevant items are added to your to-do list.
-
-## Development
-
-### Deployment
-To deploy the script, run the following command:
-```bash
-yarn deploy -f
-```
-
-### Git Workflow
-A typical git workflow for committing changes is:
-```bash
-# Check the status of the repository
-git status
-
-# Add modified files to the staging area
-git add .
-
-# Commit the changes with a descriptive message
-git commit -m "Your commit message"
-
-# Push the changes to the remote repository
-git push
-```
+## Gemini Added Memories
+- The issue-fixing cycle is as follows:
+1. Understand the Issue & Plan:
+    - Activate the project using `activate_project` tool if not already active.
+    - Use `gh issue view <issue-number>` to read the issue and comments.
+    - Look for an existing plan comment.
+    - If no plan exists, devise one and post it as a comment using `gh issue comment <issue-number> --body "..."`.
+2. Create a Branch: `git checkout -b fix/issue-<number>`.
+3. Code the Fix: Implement changes according to the plan.
+4. Test the Changes: Run project tests.
+5. Commit and Push: Commit with a descriptive message and push the branch.
+6. Create a Pull Request: Open a pull request using `gh pr create`, linking it to the issue to close it on merge. My work ends here.
