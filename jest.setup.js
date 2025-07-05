@@ -1,3 +1,5 @@
+import \{ jest \} from '@jest/globals';
+
 /**
  * Copyright 2024 Google LLC
  *
