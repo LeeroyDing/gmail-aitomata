@@ -43,9 +43,10 @@ export class AIAnalyzer {
     
     // Remove header row and join rows into a single string.
     // Assumes a two-column format (Category, Guideline)
-    const context = values.slice(1).map(row => `${row[0]}: ${row[1]}`).join('\n');
-    
-    return context;
+    const header = `| ${values[0][0]} | ${values[0][1]} |`;
+    const separator = '|---|---|';
+    const context = values.slice(1).map(row => `| ${row[0]} | ${row[1]} |`).join('\n');
+    return `${header}\n${separator}\n${context}`;
   }
 
   private static formatMessagesForAI(messages: GoogleAppsScript.Gmail.GmailMessage[]): string {

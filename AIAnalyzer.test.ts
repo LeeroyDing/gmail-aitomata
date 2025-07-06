@@ -59,7 +59,7 @@ describe('AIAnalyzer Tests', () => {
     );
 
     const context = AIAnalyzer.getContext();
-    expect(context).toBe('My Role: Project Manager\nKey Projects: Project Phoenix');
+    expect(context).toBe('| Category | Guideline |\n|---|---|\n| My Role | Project Manager |\n| Key Projects | Project Phoenix |');
   });
 
   it('should throw an error if the AI_Context sheet is not found', () => {

@@ -1,0 +1,1 @@
+When a Git command requires an editor (like 'git rebase --continue'), I must use the 'GIT_EDITOR=true' prefix to prevent it from opening an interactive editor like Vim, which I cannot use. For example: 'GIT_EDITOR=true git rebase --continue'.
