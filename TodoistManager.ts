@@ -47,7 +47,7 @@ export class TodoistManager implements TasksManager {
         contentType: "application/json",
         payload: JSON.stringify({
           content,
-          description: `${description}\ngmail_thread_id: ${threadId}`,
+          description: `${description}\n\n-----\n\ngmail_thread_id: ${threadId}`,
           project_id: config.todoist_project_id,
           due_date: task.due_date,
           priority,
