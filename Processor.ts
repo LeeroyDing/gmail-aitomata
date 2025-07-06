@@ -67,10 +67,7 @@ export class Processor {
     let markRead = false;
 
     if (plan.task) {
-      if (!plan.task.title) {
-        plan.task.title = thread.getFirstMessageSubject();
-      }
-
+      console.log(`Plan for thread ${threadId}:`, JSON.stringify(plan, null, 2));
       const confidenceDetails = `
 --- 
 **Confidence Score:** ${plan.confidence.score}/100
@@ -78,7 +75,6 @@ export class Processor {
 **Why not higher:** ${plan.confidence.not_higher_reasoning}
 **Why not lower:** ${plan.confidence.not_lower_reasoning}
 `;
-      plan.task.notes = `${plan.task.notes || ''}${confidenceDetails}`;
       Logger.log(`Confidence for thread ${threadId}: ${confidenceDetails}`);
 
       Logger.log(`Creating task for thread ${threadId}: ${plan.task.title}`);

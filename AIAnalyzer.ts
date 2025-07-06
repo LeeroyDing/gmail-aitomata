@@ -152,6 +152,8 @@ export class AIAnalyzer {
                       description:
                         "A short, easily glanceable summary of the required action.",
                       example: "Reply to Jane about the project deadline",
+                      maxLength: 100,
+                      minLength: 20,
                       nullable: false,
                     },
                     notes: {
