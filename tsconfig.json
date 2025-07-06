@@ -35,7 +35,7 @@
     "TasksManager.ts",
     "utils.ts"
   ],
-  "exclude": [
-    "**/*.test.ts"
+  "include": [
+    "**/*.ts"
   ]
 }
