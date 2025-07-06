@@ -248,4 +248,63 @@ describe('Processor Tests', () => {
     expect(mockTasksManager.upsertTask).not.toHaveBeenCalled();
     expect(mockThread.markUnread).toHaveBeenCalled();
   });
+
+  it('should add confidence score to task notes', () => {
+    // Setup
+    const mockThread = Mocks.getMockThread({
+      getId: () => 'thread-1',
+      getFirstMessageSubject: () => 'Test Subject',
+      getMessages: () => [Mocks.getMockMessage({ getDate: () => new Date() })],
+      removeLabel: jest.fn(),
+      addLabel: jest.fn(),
+    });
+
+    const mockConfig = {
+      unprocessed_label: 'unprocessed',
+      processed_label: 'processed',
+      max_threads: 50,
+    };
+    (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
+
+    const mockPlan = {
+      task: { title: 'Test Task', notes: 'Initial notes.' },
+      confidence: {
+        score: 90,
+        reasoning: 'Clear request.',
+        not_higher_reasoning: 'No deadline.',
+        not_lower_reasoning: 'High priority.',
+      },
+    };
+    (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
+    const mockTasksManager = {
+      findCheckpoint: jest.fn().mockReturnValue(null),
+      upsertTask: jest.fn().mockReturnValue(true),
+    };
+    (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
+
+    const unprocessedLabel = { getThreads: () => [mockThread] };
+    global.GmailApp = {
+      getUserLabelByName: jest.fn(() => unprocessedLabel as any),
+    } as any;
+
+    // Execute
+    Processor.processAllUnprocessedThreads();
+
+    // Verify
+    const expectedNotes = `
+--- 
+**Confidence Score:** 90/100
+**Reasoning:** Clear request.
+**Why not higher:** No deadline.
+**Why not lower:** High priority.
+`;
+    expect(mockTasksManager.upsertTask).toHaveBeenCalledWith(
+      mockThread,
+      {
+        title: 'Test Task',
+        notes: `Initial notes.${expectedNotes}`,
+      },
+      mockConfig
+    );
+  });
 });
