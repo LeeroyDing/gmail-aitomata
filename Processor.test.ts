@@ -1,11 +1,11 @@
 import { Mocks } from './Mocks';
 import { Processor } from './Processor';
 import { AIAnalyzer } from './AIAnalyzer';
-import { TasksManager } from './TasksManager';
+import { TasksManagerFactory } from './TasksManagerFactory';
 import { Config } from './Config';
 
 jest.mock('./AIAnalyzer');
-jest.mock('./TasksManager');
+jest.mock('./TasksManagerFactory');
 jest.mock('./Config');
 
 global.SpreadsheetApp = {
@@ -46,9 +46,7 @@ global.LockService = {
 describe('Processor Tests', () => {
   beforeEach(() => {
     // Reset mocks before each test
-    (AIAnalyzer.generatePlan as jest.Mock).mockClear();
-    (TasksManager.findCheckpoint as jest.Mock).mockClear();
-    (TasksManager.upsertTask as jest.Mock).mockClear();
+    (AIAnalyzer.generatePlans as jest.Mock).mockClear();
     (Config.getConfig as jest.Mock).mockClear();
   });
 
@@ -75,9 +73,12 @@ describe('Processor Tests', () => {
       action: { mark_read: true },
       task: { title: 'Test Task', notes: 'Test Notes' },
     };
-    (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
-    (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
-    (TasksManager.upsertTask as jest.Mock).mockReturnValue(true);
+    (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
+    const mockTasksManager = {
+      findCheckpoint: jest.fn().mockReturnValue(null),
+      upsertTask: jest.fn().mockReturnValue(true),
+    };
+    (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
 
     const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
     const processedLabel = { getName: (): string => 'processed' };
@@ -99,7 +100,7 @@ describe('Processor Tests', () => {
     Processor.processAllUnprocessedThreads();
 
     // Verify
-    expect(TasksManager.upsertTask).toHaveBeenCalled();
+    expect(mockTasksManager.upsertTask).toHaveBeenCalled();
     expect(mockThread.addLabel).toHaveBeenCalled();
   });
 
@@ -126,8 +127,12 @@ describe('Processor Tests', () => {
       action: { mark_read: true },
       task: { title: '', notes: 'Test Notes' },
     };
-    (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
-    (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
+    (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
+    const mockTasksManager = {
+      findCheckpoint: jest.fn().mockReturnValue(null),
+      upsertTask: jest.fn(),
+    };
+    (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
 
     const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
     const processedLabel = { getName: (): string => 'processed' };
@@ -149,7 +154,7 @@ describe('Processor Tests', () => {
     Processor.processAllUnprocessedThreads();
 
     // Verify
-    expect(TasksManager.upsertTask).toHaveBeenCalledWith(
+    expect(mockTasksManager.upsertTask).toHaveBeenCalledWith(
         mockThread,
         { title: 'Fallback Subject', notes: 'Test Notes' },
         mockConfig
@@ -173,8 +178,12 @@ describe('Processor Tests', () => {
     };
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
-    (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(null);
-    (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
+    (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([null]);
+    const mockTasksManager = {
+      findCheckpoint: jest.fn().mockReturnValue(null),
+      upsertTask: jest.fn(),
+    };
+    (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
 
     const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
     global.GmailApp = {
@@ -188,7 +197,7 @@ describe('Processor Tests', () => {
     Processor.processAllUnprocessedThreads();
 
     // Verify
-    expect(TasksManager.upsertTask).not.toHaveBeenCalled();
+    expect(mockTasksManager.upsertTask).not.toHaveBeenCalled();
     expect(mockThread.removeLabel).not.toHaveBeenCalled();
     expect(mockThread.addLabel).not.toHaveBeenCalled();
   });
@@ -215,8 +224,12 @@ describe('Processor Tests', () => {
     const mockPlan = {
       action: { mark_read: true }, // This will be overridden
     };
-    (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
-    (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
+    (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
+    const mockTasksManager = {
+      findCheckpoint: jest.fn().mockReturnValue(null),
+      upsertTask: jest.fn(),
+    };
+    (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
 
     const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
     const processedLabel = { getName: (): string => 'processed' };
@@ -232,7 +245,7 @@ describe('Processor Tests', () => {
     Processor.processAllUnprocessedThreads();
 
     // Verify
-    expect(TasksManager.upsertTask).not.toHaveBeenCalled();
+    expect(mockTasksManager.upsertTask).not.toHaveBeenCalled();
     expect(mockThread.markUnread).toHaveBeenCalled();
   });
 });

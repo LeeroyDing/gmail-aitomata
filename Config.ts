@@ -114,7 +114,8 @@ export class Config implements Readonly<MutableConfig> {
                 case "GEMINI_API_KEY":
                 case "task_service":
                 case "todoist_api_key":
-                case "todoist_project_id": {
+                case "todoist_project_id":
+                case "gemini_model": {
                     config[name] = value;
                     break;
                 }

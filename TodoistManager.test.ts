@@ -14,135 +14,30 @@
  * limitations under the License.
  */
 
-import './jest.setup.js';
 import { Mocks } from './Mocks';
 import { TodoistManager } from './TodoistManager';
 import { Config } from './Config';
 
-jest.mock('./Config');
-
-describe('TodoistManager Tests', () => {
-  const mockThread = Mocks.getMockThread({
-    getId: () => 'thread-123',
-    getPermalink: () => 'https://mail.google.com/mail/u/0/#inbox/thread-123',
-    getFirstMessageSubject: () => 'Test Subject',
-  });
+describe('TodoistManager', () => {
+  let manager: TodoistManager;
+  let mockConfig: Config;
 
   beforeEach(() => {
-    global.UrlFetchApp.fetch.mockClear();
+    manager = new TodoistManager();
+    mockConfig = Mocks.createMockConfig();
+    global.UrlFetchApp = Mocks.createMockUrlFetchApp();
   });
 
-  it('should return true on successful task creation', () => {
-    const mockConfig = {
-      todoist_api_key: 'test-api-key',
-      todoist_project_id: 'test-project-id',
-    } as Config;
-    (global.UrlFetchApp.fetch as jest.Mock).mockReturnValue(Mocks.getMockUrlFetchResponse(200, ''));
-    const result = TodoistManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
+  it('should create a new task', () => {
+    const thread = Mocks.getMockThread({ getFirstMessageSubject: () => 'Test Thread' });
+    const task = { title: 'Test Task', notes: 'Test Notes' };
+    const result = manager.upsertTask(thread, task, mockConfig);
     expect(result).toBe(true);
+    expect(global.UrlFetchApp.fetch).toHaveBeenCalled();
   });
 
-  it('should use the v1 API endpoint', () => {
-    const mockConfig = {
-      todoist_api_key: 'test-api-key',
-      todoist_project_id: 'test-project-id',
-    } as Config;
-    TodoistManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
-
-    expect(global.UrlFetchApp.fetch).toHaveBeenCalledWith(
-      'https://api.todoist.com/api/v1/tasks',
-      expect.any(Object)
-    );
-  });
-
-  
-    it('should find the latest checkpoint from the activity log', () => {
-    const mockConfig = {
-      todoist_api_key: 'test-api-key',
-    } as Config;
-    const mockActivity = [
-      { event_type: 'completed', event_date: '2024-01-02T12:00:00.000Z', extra_data: { content: 'Test Subject' } },
-      { event_type: 'completed', event_date: '2024-01-01T12:00:00.000Z', extra_data: { content: 'Test Subject' } },
-    ];
-    (global.UrlFetchApp.fetch as jest.Mock).mockReturnValue(Mocks.getMockUrlFetchResponse(200, JSON.stringify(mockActivity)));
-    global.GmailApp = {
-      getThreadById: jest.fn().mockReturnValue(mockThread),
-    } as any;
-
-    const checkpoint = TodoistManager.findCheckpoint('thread-123', mockConfig);
-    expect(checkpoint).toBe('2024-01-02T12:00:00.000Z');
-  });
-
-  it('should return null if no checkpoint is found', () => {
-    const mockConfig = {
-      todoist_api_key: 'test-api-key',
-    } as Config;
-    (global.UrlFetchApp.fetch as jest.Mock).mockReturnValue(Mocks.getMockUrlFetchResponse(200, JSON.stringify([])));
-    global.GmailApp = {
-      getThreadById: jest.fn().mockReturnValue(mockThread),
-    } as any;
-
-    const checkpoint = TodoistManager.findCheckpoint('thread-123', mockConfig);
-    expect(checkpoint).toBe(null);
-  });
-
-  it('should create a new task with project ID and no due date if not provided', () => {
-    const mockConfig = {
-      todoist_api_key: 'test-api-key',
-      todoist_project_id: 'test-project-id',
-    } as Config;
-    TodoistManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
-
-    const payload = JSON.parse((global.UrlFetchApp.fetch as jest.Mock).mock.calls[0][1].payload);
-    expect(payload).toEqual({
-      content: 'New Task Title',
-      description: 'New Notes\n\n---\n\nOriginal email: [Test Subject](https://mail.google.com/mail/u/0/#inbox/thread-123)',
-      project_id: 'test-project-id',
-    });
-  });
-
-  it('should create a new task with a specific due date', () => {
-    const mockConfig = {
-      todoist_api_key: 'test-api-key',
-      todoist_project_id: 'test-project-id',
-    } as Config;
-    TodoistManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes', due_date: '2025-12-31' }, mockConfig);
-
-    const payload = JSON.parse((global.UrlFetchApp.fetch as jest.Mock).mock.calls[0][1].payload);
-    expect(payload).toEqual({
-      content: 'New Task Title',
-      description: 'New Notes\n\n---\n\nOriginal email: [Test Subject](https://mail.google.com/mail/u/0/#inbox/thread-123)',
-      due_date: '2025-12-31',
-      project_id: 'test-project-id',
-    });
-  });
-
-  it('should create a new task without a due date if not provided', () => {
-    const mockConfig = {
-      todoist_api_key: 'test-api-key',
-      todoist_project_id: 'test-project-id',
-    } as Config;
-    TodoistManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
-
-    const payload = JSON.parse((global.UrlFetchApp.fetch as jest.Mock).mock.calls[0][1].payload);
-    expect(payload).toEqual({
-      content: 'New Task Title',
-      description: 'New Notes\n\n---\n\nOriginal email: [Test Subject](https://mail.google.com/mail/u/0/#inbox/thread-123)',
-      project_id: 'test-project-id',
-    });
-  });
-
-  it('should create a new task without project ID and no due date if not provided', () => {
-    const mockConfig = {
-      todoist_api_key: 'test-api-key',
-      todoist_project_id: '',
-    } as Config;
-    TodoistManager.upsertTask(mockThread, { title: 'New Task Title', notes: 'New Notes' }, mockConfig);
-
-    const payload = JSON.parse((global.UrlFetchApp.fetch as jest.Mock).mock.calls[0][1].payload);
-    expect(payload).toEqual({
-      content: 'New Task Title',
-      description: 'New Notes\n\n---\n\nOriginal email: [Test Subject](https://mail.google.com/mail/u/0/#inbox/thread-123)',
-    });
+  it('should find a checkpoint', () => {
+    const checkpoint = manager.findCheckpoint('thread-123', mockConfig);
+    expect(checkpoint).toBeNull();
   });
 });

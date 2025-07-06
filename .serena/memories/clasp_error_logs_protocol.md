@@ -1,0 +1,1 @@
+The `clasp` CLI tool does not have a command to pull error logs. To view errors, you must go to the Google Cloud Platform Console or the Apps Script editor.

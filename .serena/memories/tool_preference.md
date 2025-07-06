@@ -1,0 +1,1 @@
+This project prefers Serena tools over the default Gemini native tools when an equivalent tool exists. This is to ensure that the project's specific configurations and symbolic language server features are used correctly. For example, prefer `serena.list_dir` over `default_api.list_directory`.
