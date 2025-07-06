@@ -66,15 +66,14 @@ export class AIAnalyzer {
     context: string,
     config: Config
   ): (PlanOfAction | null)[] {
+    if (!config.GEMINI_API_KEY) {
+      throw new Error("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
+    }
     if (threads.length === 0) {
       return [];
     }
 
     const apiKey = config.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
-    }
-
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${config.gemini_model}:generateContent?key=${apiKey}`;
 
     const threadsContent = threads.map(thread => {
