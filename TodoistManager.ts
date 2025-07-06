@@ -71,8 +71,13 @@ export class TodoistManager implements TasksManager {
       },
     };
     const response = UrlFetchApp.fetch(url, options);
-    const tasks = JSON.parse(response.getContentText());
-    for (const task of tasks) {
+    interface TodoistTasksResponse {
+      results: Array<{
+        description: string;
+      }>
+    }
+    const tasks = JSON.parse(response.getContentText()) as TodoistTasksResponse;
+    for (const task of tasks.results) {
       if (
         task.description &&
         task.description.includes(`gmail_thread_id: ${threadId}`)

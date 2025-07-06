@@ -22,6 +22,18 @@ describe("TodoistManager", () => {
       due_date: undefined,
       priority: 4,
     };
+    global.UrlFetchApp.fetch = jest.fn((url: string) => ({
+      getResponseCode: () => 200,
+      getContentText: () => {
+        if (url.includes("project_id")) {
+          return JSON.stringify({
+            results: [],
+          });
+        } else {
+          return JSON.stringify({ id: "12345" });
+        }
+      },
+    })) as any;
     const result = manager.upsertTask(thread, task, mockConfig);
     expect(result).toBe(true);
     expect(global.UrlFetchApp.fetch).toHaveBeenCalled();
