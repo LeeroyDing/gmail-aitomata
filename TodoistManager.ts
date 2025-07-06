@@ -1,15 +1,40 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Config } from './Config';
 import { Task, TasksManager } from './TasksManager';
+import { PlanOfAction } from './AIAnalyzer';
 
 export class TodoistManager implements TasksManager {
   public upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config): boolean {
     const threadId = thread.getId();
     const existingTask = this.findTaskByThreadId(threadId, config);
 
-    const content = `${task.title}\n${task.notes}`;
-    
-    const priority = task.priority;
+    const permalink = `https://mail.google.com/mail/u/0/#inbox/${threadId}`;
+    const subject = thread.getFirstMessageSubject();
+    const description = `${task.notes}\n\n---\n\nOriginal email: [${subject}](${permalink})`;
+
+    const taskData: {
+      content: string;
+      description: string;
+      due_date?: string;
+      priority?: number;
+      project_id?: string;
+    } = {
+      content: task.title,
+      description,
+    };
+
+    if (task.due_date && /^\d{4}-\d{2}-\d{2}$/.test(task.due_date)) {
+      taskData.due_date = task.due_date;
+    }
+
+    if (task.priority) {
+      // Map AI priority (1-4) to Todoist API priority (4-1)
+      taskData.priority = 5 - task.priority;
+    }
+
+    if (config.todoist_project_id) {
+      taskData.project_id = config.todoist_project_id;
+    }
 
     if (existingTask) {
       // Update existing task
@@ -20,7 +45,7 @@ export class TodoistManager implements TasksManager {
           Authorization: `Bearer ${config.todoist_api_key}`,
         },
         contentType: 'application/json',
-        payload: JSON.stringify({ content, due_string: task.due_date, priority }),
+        payload: JSON.stringify(taskData),
         muteHttpExceptions: true,
       };
       const response = UrlFetchApp.fetch(url, options);
@@ -38,11 +63,8 @@ export class TodoistManager implements TasksManager {
         },
         contentType: 'application/json',
         payload: JSON.stringify({
-          content,
-          project_id: config.todoist_project_id,
-          due_string: task.due_date,
-          priority,
-          description: `gmail_thread_id: ${threadId}`,
+          ...taskData,
+          description: `${description}\ngmail_thread_id: ${threadId}`,
         }),
         muteHttpExceptions: true,
       };

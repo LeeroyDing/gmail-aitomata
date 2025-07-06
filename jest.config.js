@@ -17,5 +17,23 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  testMatch: ['**/*.test.ts'],
   setupFilesAfterEnv: ['./jest.setup.js'],
+  globals: {
+    'ts-jest': {
+      diagnostics: {
+        warnOnly: true,
+        ignoreCodes: [6133],
+      },
+    },
+    Mocks: {},
+    Tasks: {},
+    UrlFetchApp: {},
+    SpreadsheetApp: {},
+    Logger: {},
+    LockService: {},
+    GmailApp: {},
+    ScriptApp: {},
+    Session: {}
+  }
 };

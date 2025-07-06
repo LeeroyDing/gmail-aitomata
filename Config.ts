@@ -53,7 +53,7 @@ export class Config implements Readonly<MutableConfig> {
     }
 
     public static getConfig(): Config {
-        let config: MutableConfig = {
+        const config: MutableConfig = {
             unprocessed_label: "unprocessed",
             processed_label: "processed",
             processing_failed_label: "error",
