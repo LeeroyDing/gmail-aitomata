@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 /**
  * Copyright 2024 Google LLC
  *

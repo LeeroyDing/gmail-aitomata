@@ -16,17 +16,17 @@
 
 import {Config} from './Config';
 import {Processor} from './Processor';
-
+import {Stats} from './Stats';
 import Utils from './utils';
-
-
+import { AIAnalyzer } from './AIAnalyzer';
+import { TasksManager } from './TasksManager';
 
 
 // String.startsWith polyfill
 if (!String.prototype.startsWith) {
     Object.defineProperty(String.prototype, 'startsWith', {
-        value: function (search: string, rawPos: number) {
-            const pos = rawPos > 0 ? rawPos | 0 : 0;
+        value: function (search: String, rawPos: number) {
+            var pos = rawPos > 0 ? rawPos | 0 : 0;
             return this.substring(pos, pos + search.length) === search;
         }
     });
@@ -34,7 +34,7 @@ if (!String.prototype.startsWith) {
 
 // String.endsWith polyfill
 if (!String.prototype.endsWith) {
-    String.prototype.endsWith = function (search: string, this_len?: number) {
+    String.prototype.endsWith = function (search, this_len) {
         if (this_len === undefined || this_len > this.length) {
             this_len = this.length;
         }
@@ -46,17 +46,18 @@ if (!String.prototype.endsWith) {
 if (typeof Object.assign !== 'function') {
     // Must be writable: true, enumerable: false, configurable: true
     Object.defineProperty(Object, "assign", {
-        value: function assign(target: object, ...sources: any[]) { // .length of function is 2
+        value: function assign(target: Object, _source1: Object, ..._sources: Array<Object>) { // .length of function is 2
             if (target === null || target === undefined) {
                 throw new TypeError('Cannot convert undefined or null to object');
             }
 
-            const to = Object(target);
+            var to = Object(target);
 
-            for (const nextSource of sources) {
+            for (var index = 1; index < arguments.length; index++) {
+                var nextSource = arguments[index];
 
                 if (nextSource !== null && nextSource !== undefined) {
-                    for (const nextKey in nextSource) {
+                    for (var nextKey in nextSource) {
                         // Avoid bugs when hasOwnProperty is shadowed
                         if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
                             to[nextKey] = nextSource[nextKey];
@@ -80,9 +81,9 @@ function ensurePermissionsEstablished() {
 }
 
 // Triggered when Spreadsheet is opened
-
+// noinspection JSUnusedGlobalSymbols
 // @ts-ignore
-function onOpen() {
+function onOpen(e: { authMode: GoogleAppsScript.Script.AuthMode }) {
     const ui = SpreadsheetApp.getUi();
     const menu = ui.createMenu('Gmail Automata');
     if (e && e.authMode == ScriptApp.AuthMode.NONE) {
@@ -97,6 +98,7 @@ function onOpen() {
     menu.addToUi();
 }
 
+// Triggered when time-driven trigger or click via Spreadsheet menu
 // @ts-ignore
 function processEmails() {
     ensurePermissionsEstablished();
@@ -113,7 +115,7 @@ function setupTriggers() {
     Utils.withFailureEmailed("setupTriggers", () => {
         const config = Utils.withTimer("getConfigs", () => Config.getConfig());
         Utils.withTimer("addingTriggers", () => {
-            const trigger = ScriptApp.newTrigger('processEmails')
+            let trigger = ScriptApp.newTrigger('processEmails')
                 .timeBased()
                 .everyMinutes(config.processing_frequency_in_minutes)
                 .create();
