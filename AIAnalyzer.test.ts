@@ -116,11 +116,7 @@ describe('AIAnalyzer Tests', () => {
 
   it('should throw an error if GEMINI_API_KEY is missing', () => {
     const emptyConfig = { GEMINI_API_KEY: '' } as Config;
-    try {
-      AIAnalyzer.generatePlans([], 'context', emptyConfig);
-    } catch (e) {
-      expect(e.message).toBe("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
-    }
+    expect(() => AIAnalyzer.generatePlans([], 'context', emptyConfig)).toThrow("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
   });
 });
 
