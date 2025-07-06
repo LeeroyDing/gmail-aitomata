@@ -70,7 +70,6 @@ describe('AIAnalyzer Tests', () => {
   });
 
   it('should generate a plan by calling the AI API', () => {
-    const mockMessages = [Mocks.getMockMessage({ subject: 'Test Subject', plainBody: 'Test Body' })];
     const mockContext = 'Test Context';
     const mockPlan: PlanOfAction = {
       task: { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31' },
@@ -83,43 +82,50 @@ describe('AIAnalyzer Tests', () => {
       expect(payload.contents[0].parts[0].text).toContain('Test Subject');
       
       return Mocks.getMockUrlFetchResponse(200, JSON.stringify({
-        candidates: [{ content: { parts: [{ text: JSON.stringify(mockPlan) }] } }],
+        candidates: [{ content: { parts: [{ text: JSON.stringify([mockPlan]) }] } }],
       }));
     });
 
-    const plan = AIAnalyzer.generatePlan(mockMessages, mockContext, mockConfig);
-    expect(plan).toEqual(mockPlan);
+    const plan = AIAnalyzer.generatePlans([Mocks.getMockThread({ getFirstMessageSubject: () => 'Test Subject' })], mockContext, mockConfig);
+    expect(plan[0]).toEqual(mockPlan);
   });
 
   it('should generate a plan without a task if the email is not actionable', () => {
-    const mockMessages = [Mocks.getMockMessage({ subject: 'Non-Actionable', plainBody: 'FYI only' })];
     const mockContext = 'Test Context';
     const mockPlan: PlanOfAction = {};
 
     (global.UrlFetchApp.fetch as jest.Mock).mockImplementation((url, params) => {
       return Mocks.getMockUrlFetchResponse(200, JSON.stringify({
-        candidates: [{ content: { parts: [{ text: JSON.stringify(mockPlan) }] } }],
+        candidates: [{ content: { parts: [{ text: JSON.stringify([mockPlan]) }] } }],
       }));
     });
 
-    const plan = AIAnalyzer.generatePlan(mockMessages, mockContext, mockConfig);
-    expect(plan).toEqual(mockPlan);
-    expect(plan?.task).toBeUndefined();
+    const plan = AIAnalyzer.generatePlans([Mocks.getMockThread({})], mockContext, mockConfig);
+    expect(plan[0]).toEqual(mockPlan);
+    expect(plan[0]?.task).toBeUndefined();
   });
 
   it('should handle AI API errors gracefully', () => {
-    const mockMessages = [Mocks.getMockMessage({})];
-    
     (global.UrlFetchApp.fetch as jest.Mock).mockReturnValue(
       Mocks.getMockUrlFetchResponse(500, 'Internal Server Error')
     );
 
-    const plan = AIAnalyzer.generatePlan(mockMessages, 'context', mockConfig);
-    expect(plan).toBe(null);
+    const plan = AIAnalyzer.generatePlans([Mocks.getMockThread({})], 'context', mockConfig);
+    expect(plan).toEqual([]);
   });
 
   it('should throw an error if GEMINI_API_KEY is missing', () => {
     const emptyConfig = { GEMINI_API_KEY: '' } as Config;
-    expect(() => AIAnalyzer.generatePlan([], 'context', emptyConfig)).toThrow("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
+    try {
+      AIAnalyzer.generatePlans([], 'context', emptyConfig);
+    } catch (e) {
+      expect(e.message).toBe("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
+    }
   });
 });
+
+
+
+
+
+

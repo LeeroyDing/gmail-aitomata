@@ -16,7 +16,7 @@
 
 import { Config } from './Config';
 import { Stats } from './Stats';
-import { AIAnalyzer } from './AIAnalyzer';
+import { AIAnalyzer, PlanOfAction } from './AIAnalyzer';
 import { TasksManager } from './TasksManager';
 
 
@@ -28,7 +28,8 @@ export class Processor {
   private static processThread(
     thread: GoogleAppsScript.Gmail.GmailThread,
     config: Config,
-    aiContext: string
+    aiContext: string,
+    plan: PlanOfAction | null
   ) {
     const threadId = thread.getId();
     console.log(`Processing thread: ${thread.getFirstMessageSubject()} (${threadId})`);
@@ -53,8 +54,6 @@ export class Processor {
     }
 
     // 3. Get a "Plan of Action" from the AI.
-    const plan = AIAnalyzer.generatePlan(newMessages, aiContext, config);
-
     if (!plan) {
       console.error(`Failed to get a plan from the AI for thread ${threadId}.`);
       // Potentially move to an error state
@@ -137,12 +136,15 @@ export class Processor {
         return;
       }
 
+      const plans = AIAnalyzer.generatePlans(unprocessedThreads, aiContext, config);
       let processedThreadCount = 0;
       let allPass = true;
 
-      for (const thread of unprocessedThreads) {
+      for (let i = 0; i < unprocessedThreads.length; i++) {
+        const thread = unprocessedThreads[i];
+        const plan = plans[i];
         try {
-          this.processThread(thread, config, aiContext);
+          this.processThread(thread, config, aiContext, plan);
           processedThreadCount++;
         } catch (e) {
           allPass = false;
