@@ -60,11 +60,15 @@ export class AIAnalyzer {
    * @param {string} context - The user's context to guide the AI.
    * @returns {PlanOfAction | null} A structured plan of action, or null if an error occurs.
    */
-  public static generatePlan(
-    messages: GoogleAppsScript.Gmail.GmailMessage[],
+  public static generatePlans(
+    threads: GoogleAppsScript.Gmail.GmailThread[],
     context: string,
     config: Config
-  ): PlanOfAction | null {
+  ): (PlanOfAction | null)[] {
+    if (threads.length === 0) {
+      return [];
+    }
+
     const apiKey = config.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
@@ -72,11 +76,21 @@ export class AIAnalyzer {
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${config.gemini_model}:generateContent?key=${apiKey}`;
 
-    const messageContent = this.formatMessagesForAI(messages);
+    const threadsContent = threads.map(thread => {
+      const messages = thread.getMessages();
+      const messageContent = this.formatMessagesForAI(messages);
+      return `
+        **EMAIL THREAD: ${thread.getFirstMessageSubject()}**
+        ---
+        ${messageContent}
+        ---
+      `;
+    }).join('\n\n');
 
     const systemPrompt = `
       **SYSTEM PROMPT:**
-      You are an assistant helping me manage my email. Analyze the following email conversation based on my personal context and generate a "Plan of Action".
+      You are an assistant helping me manage my email. Analyze the following email threads based on my personal context and generate a "Plan of Action" for each thread.
+      Return an array of "Plan of Action" objects, one for each thread.
 
       **MY CONTEXT:**
       ---
@@ -84,8 +98,8 @@ export class AIAnalyzer {
       ---
 
       **YOUR TASK:**
-      Generate a "Plan of Action".
-      If the email is actionable, create a task. Otherwise, do not include the "task" object.
+      Generate an array of "Plan of Action" objects.
+      If an email thread is actionable, create a task. Otherwise, do not include the "task" object for that thread.
       The "title" should be a very short, easily glanceable summary of the required action (e.g., "Reply to Jane about the project deadline").
       The "notes" fields must not be null or empty if the task is present.
       The "due_date" should be in YYYY-MM-DD format.
@@ -94,9 +108,9 @@ export class AIAnalyzer {
     `;
 
     const userPrompt = `
-      **EMAIL CONTENT:**
+      **EMAIL THREADS:**
       ---
-      ${messageContent}
+      ${threadsContent}
       ---
     `;
 
@@ -116,17 +130,20 @@ export class AIAnalyzer {
         generationConfig: {
           response_mime_type: "application/json",
           response_schema: {
-            type: "OBJECT",
-            properties: {
-              task: {
-        type: "OBJECT",
-        properties: {
-          title: { type: "STRING" },
-          notes: { type: "STRING" },
-          due_date: { type: "STRING" },
-          priority: { type: "NUMBER" },
-        },
-      },
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                task: {
+                  type: "OBJECT",
+                  properties: {
+                    title: { type: "STRING" },
+                    notes: { type: "STRING" },
+                    due_date: { type: "STRING" },
+                    priority: { type: "NUMBER" },
+                  },
+                },
+              },
             },
           },
         }
@@ -141,17 +158,17 @@ export class AIAnalyzer {
 
       if (responseCode === 200) {
         const jsonResponse = JSON.parse(responseBody);
-        const plan = jsonResponse.candidates[0].content.parts[0].text;
-        return JSON.parse(plan) as PlanOfAction;
+        const plans = jsonResponse.candidates[0].content.parts[0].text;
+        return JSON.parse(plans) as (PlanOfAction | null)[];
       } else {
         console.error(`AI API request failed with code ${responseCode}: ${responseBody}`);
         Logger.log(`AI API request failed with code ${responseCode}: ${responseBody}`);
-        return null;
+        return [];
       }
     } catch (e) {
       console.error(`Failed to call AI API: ${e}`);
       Logger.log(`Failed to call AI API: ${e}`);
-      return null;
+      return [];
     }
   }
 }

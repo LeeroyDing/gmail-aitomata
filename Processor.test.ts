@@ -46,7 +46,7 @@ global.LockService = {
 describe('Processor Tests', () => {
   beforeEach(() => {
     // Reset mocks before each test
-    (AIAnalyzer.generatePlan as jest.Mock).mockClear();
+    (AIAnalyzer.generatePlans as jest.Mock).mockClear();
     (TasksManager.findCheckpoint as jest.Mock).mockClear();
     (TasksManager.upsertTask as jest.Mock).mockClear();
     (Config.getConfig as jest.Mock).mockClear();
@@ -75,7 +75,7 @@ describe('Processor Tests', () => {
       action: { mark_read: true },
       task: { title: 'Test Task', notes: 'Test Notes' },
     };
-    (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
+    (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
     (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
     (TasksManager.upsertTask as jest.Mock).mockReturnValue(true);
 
@@ -126,7 +126,7 @@ describe('Processor Tests', () => {
       action: { mark_read: true },
       task: { title: '', notes: 'Test Notes' },
     };
-    (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
+    (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
     (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
 
     const unprocessedLabel = { getThreads: () => [mockThread] };
@@ -173,7 +173,7 @@ describe('Processor Tests', () => {
     };
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
-    (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(null);
+    (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([null]);
     (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
 
     const unprocessedLabel = { getThreads: () => [mockThread] };
@@ -215,7 +215,7 @@ describe('Processor Tests', () => {
     const mockPlan = {
       action: { mark_read: true }, // This will be overridden
     };
-    (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
+    (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
     (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
 
     const unprocessedLabel = { getThreads: () => [mockThread] };
