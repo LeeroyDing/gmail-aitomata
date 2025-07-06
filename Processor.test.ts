@@ -79,20 +79,20 @@ describe('Processor Tests', () => {
     (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
     (TasksManager.upsertTask as jest.Mock).mockReturnValue(true);
 
-    const unprocessedLabel = { getThreads: () => [mockThread] };
-    const processedLabel = { getName: () => 'processed' };
+    const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
+    const processedLabel = { getName: (): string => 'processed' };
     global.GmailApp = {
-      getUserLabelByName: jest.fn((name: string) => {
-        if (name === 'unprocessed') {
-          return unprocessedLabel as any;
-        }
-        if (name === 'processed') {
-            return processedLabel as any;
-        }
-        return {
-          getName: () => name,
-        } as any;
-      }),
+        getUserLabelByName: jest.fn((name: string) => {
+            if (name === 'unprocessed') {
+                return unprocessedLabel as any;
+            }
+            if (name === 'processed') {
+                return processedLabel as any;
+            }
+            return {
+                getName: () => name,
+            } as any;
+        }),
     } as any;
 
     // Execute
@@ -129,8 +129,8 @@ describe('Processor Tests', () => {
     (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
     (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
 
-    const unprocessedLabel = { getThreads: () => [mockThread] };
-    const processedLabel = { getName: () => 'processed' };
+    const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
+    const processedLabel = { getName: (): string => 'processed' };
     global.GmailApp = {
         getUserLabelByName: jest.fn((name: string) => {
             if (name === 'unprocessed') {
@@ -176,7 +176,7 @@ describe('Processor Tests', () => {
     (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(null);
     (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
 
-    const unprocessedLabel = { getThreads: () => [mockThread] };
+    const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
     global.GmailApp = {
       getUserLabelByName: jest.fn((name: string) => {
         if (name === 'unprocessed') return unprocessedLabel as any;
@@ -218,8 +218,8 @@ describe('Processor Tests', () => {
     (AIAnalyzer.generatePlan as jest.Mock).mockReturnValue(mockPlan);
     (TasksManager.findCheckpoint as jest.Mock).mockReturnValue(null);
 
-    const unprocessedLabel = { getThreads: () => [mockThread] };
-    const processedLabel = { getName: () => 'processed' };
+    const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
+    const processedLabel = { getName: (): string => 'processed' };
     global.GmailApp = {
       getUserLabelByName: jest.fn((name: string) => {
         if (name === 'unprocessed') return unprocessedLabel as any;

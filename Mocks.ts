@@ -1,5 +1,5 @@
 export const Mocks = {
-  getMockThread: (overrides: any) => ({
+  getMockThread: (overrides: Partial<GoogleAppsScript.Gmail.GmailThread>): GoogleAppsScript.Gmail.GmailThread => ({
     ...{
       getId: () => 'thread-id',
       getFirstMessageSubject: () => 'Test Subject',
@@ -14,7 +14,7 @@ export const Mocks = {
     },
     ...overrides,
   }),
-  getMockMessage: (overrides: any) => ({
+  getMockMessage: (overrides: Partial<GoogleAppsScript.Gmail.GmailMessage>): GoogleAppsScript.Gmail.GmailMessage => ({
     ...{
       getDate: () => new Date(),
       getFrom: () => 'test@example.com',
@@ -24,13 +24,13 @@ export const Mocks = {
     },
     ...overrides,
   }),
-  getMockSheet: (data: any[][]) => ({
+  getMockSheet: (data: any[][]): GoogleAppsScript.Spreadsheet.Sheet => ({
     getDataRange: () => ({
       getValues: () => data,
       getDisplayValues: () => data,
     }),
   }),
-  getMockSpreadsheet: (sheets: { [key: string]: any }) => ({
+  getMockSpreadsheet: (sheets: { [key: string]: GoogleAppsScript.Spreadsheet.Sheet }): GoogleAppsScript.Spreadsheet.Spreadsheet => ({
     getSheetByName: (name: string) => sheets[name],
     addDeveloperMetadata: () => {},
     addEditor: () => {},
@@ -163,7 +163,7 @@ export const Mocks = {
     setRecalculationInterval: () => {},
     setSpreadsheetLocale: () => {},
   }),
-  getMockUrlFetchResponse: (code: number, content: string) => ({
+  getMockUrlFetchResponse: (code: number, content: string): GoogleAppsScript.URL_Fetch.HTTPResponse => ({
     getResponseCode: () => code,
     getContentText: () => content,
     getAllHeaders: () => ({}),
@@ -172,7 +172,7 @@ export const Mocks = {
     getContent: () => [],
     getHeaders: () => ({}),
   }),
-  getMockTask: (overrides: any) => ({
+  getMockTask: (overrides: Partial<GoogleAppsScript.Tasks.Schema.Task>): GoogleAppsScript.Tasks.Schema.Task => ({
     ...{
       id: 'task-id',
       title: 'Test Task',
@@ -189,7 +189,7 @@ export const Mocks = {
     },
     ...overrides,
   }),
-  getMockTaskList: (overrides: any) => ({
+  getMockTaskList: (overrides: Partial<GoogleAppsScript.Tasks.Schema.TaskList>): GoogleAppsScript.Tasks.Schema.TaskList => ({
     ...{
       id: 'task-list-id',
       title: 'Test Task List',

@@ -42,10 +42,10 @@ describe('AIAnalyzer Tests', () => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
     global.SpreadsheetApp = {
       getActiveSpreadsheet: jest.fn(),
-     as any;|as any;
+    } as any;
     global.UrlFetchApp = {
       fetch: jest.fn(),
-     as any;|as any;
+    } as any;
   });
 
   it('should read context from the AI_Context sheet', () => {

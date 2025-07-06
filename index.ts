@@ -81,7 +81,8 @@ function ensurePermissionsEstablished() {
 
 // Triggered when Spreadsheet is opened
 
-function onOpen(e: { authMode: GoogleAppsScript.Script.AuthMode }) {
+// @ts-ignore
+function onOpen() {
     const ui = SpreadsheetApp.getUi();
     const menu = ui.createMenu('Gmail Automata');
     if (e && e.authMode == ScriptApp.AuthMode.NONE) {
@@ -96,11 +97,13 @@ function onOpen(e: { authMode: GoogleAppsScript.Script.AuthMode }) {
     menu.addToUi();
 }
 
+// @ts-ignore
 function processEmails() {
     ensurePermissionsEstablished();
     Utils.withFailureEmailed("processEmails", () => Processor.processAllUnprocessedThreads());
 }
 
+// @ts-ignore
 function setupTriggers() {
     ensurePermissionsEstablished();
 

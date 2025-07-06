@@ -73,7 +73,13 @@ export class TodoistManager {
 
 Original email: [${subject}](${permalink})`;
 
-    const taskData: any = {
+    const taskData: {
+      content: string;
+      description: string;
+      due_date?: string;
+      priority?: number;
+      project_id?: string;
+    } = {
       content: taskDetails.title,
       description: description,
     };

@@ -1,4 +1,4 @@
-import \{ jest \} from '@jest/globals';
+import { jest } from '@jest/globals';
 
 /**
  * Copyright 2024 Google LLC
@@ -17,7 +17,7 @@ import \{ jest \} from '@jest/globals';
  */
 
 // Define mock objects for Google Apps Script services
-global.Tasks = {
+global.$1 = {
   Tasklists: {
     list: jest.fn(),
   },
@@ -28,16 +28,16 @@ global.Tasks = {
   },
 };
 
-global.SpreadsheetApp = {
+global.$1 = {
   getActiveSpreadsheet: jest.fn(() => ({
     getSheetByName: jest.fn(),
   })),
 };
 
-global.UrlFetchApp = {
+global.$1 = {
   fetch: jest.fn(),
 };
 
-global.Logger = {
+global.$1 = {
   log: jest.fn(),
 };
