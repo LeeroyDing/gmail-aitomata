@@ -47,7 +47,7 @@ describe("TodoistManager", () => {
         contentType: "application/json",
         payload: JSON.stringify({
           content: "Test Task",
-          description: "Test Notes\ngmail_thread_id: " + thread.getId(),
+          description: "Test Notes\n\n-----\n\ngmail_thread_id: " + thread.getId(),
           project_id: mockConfig.todoist_project_id,
           due_date: undefined,
           priority: 4,
