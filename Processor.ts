@@ -71,6 +71,19 @@ export class Processor {
       if (!plan.task.title) {
         plan.task.title = thread.getFirstMessageSubject();
       }
+
+      if (plan.confidence) {
+        const confidenceDetails = `
+--- 
+**Confidence Score:** ${plan.confidence.score}/100
+**Reasoning:** ${plan.confidence.reasoning}
+**Why not higher:** ${plan.confidence.not_higher_reasoning}
+**Why not lower:** ${plan.confidence.not_lower_reasoning}
+`;
+        plan.task.notes = `${plan.task.notes || ''}${confidenceDetails}`;
+        Logger.log(`Confidence for thread ${threadId}: ${confidenceDetails}`);
+      }
+
       Logger.log(`Creating task for thread ${threadId}: ${plan.task.title}`);
       const taskCreated = tasksManager.upsertTask(thread, plan.task, config);
       if (taskCreated) {
