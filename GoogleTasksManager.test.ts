@@ -18,9 +18,7 @@ describe('GoogleTasksManager', () => {
     const task = { title: 'Test Task', notes: 'Test Notes' };
     const result = manager.upsertTask(thread, task, mockConfig);
     expect(result).toBe(true);
-    if (global.Tasks && global.Tasks.Tasks) {
-      expect(global.Tasks.Tasks.insert).toHaveBeenCalled();
-    }
+    expect(global.Tasks?.Tasks?.insert).toHaveBeenCalled();
   });
 
   it('should find a checkpoint', () => {
