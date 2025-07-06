@@ -80,20 +80,20 @@ describe('Processor Tests', () => {
     };
     (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
 
-    const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
-    const processedLabel = { getName: (): string => 'processed' };
+    const unprocessedLabel = { getThreads: () => [mockThread] };
+    const processedLabel = { getName: () => 'processed' };
     global.GmailApp = {
-        getUserLabelByName: jest.fn((name: string) => {
-            if (name === 'unprocessed') {
-                return unprocessedLabel as any;
-            }
-            if (name === 'processed') {
-                return processedLabel as any;
-            }
-            return {
-                getName: () => name,
-            } as any;
-        }),
+      getUserLabelByName: jest.fn((name: string) => {
+        if (name === 'unprocessed') {
+          return unprocessedLabel as any;
+        }
+        if (name === 'processed') {
+            return processedLabel as any;
+        }
+        return {
+          getName: () => name,
+        } as any;
+      }),
     } as any;
 
     // Execute
@@ -134,8 +134,8 @@ describe('Processor Tests', () => {
     };
     (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
 
-    const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
-    const processedLabel = { getName: (): string => 'processed' };
+    const unprocessedLabel = { getThreads: () => [mockThread] };
+    const processedLabel = { getName: () => 'processed' };
     global.GmailApp = {
         getUserLabelByName: jest.fn((name: string) => {
             if (name === 'unprocessed') {
@@ -185,7 +185,7 @@ describe('Processor Tests', () => {
     };
     (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
 
-    const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
+    const unprocessedLabel = { getThreads: () => [mockThread] };
     global.GmailApp = {
       getUserLabelByName: jest.fn((name: string) => {
         if (name === 'unprocessed') return unprocessedLabel as any;
@@ -231,8 +231,8 @@ describe('Processor Tests', () => {
     };
     (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
 
-    const unprocessedLabel = { getThreads: (): GoogleAppsScript.Gmail.GmailThread[] => [mockThread] };
-    const processedLabel = { getName: (): string => 'processed' };
+    const unprocessedLabel = { getThreads: () => [mockThread] };
+    const processedLabel = { getName: () => 'processed' };
     global.GmailApp = {
       getUserLabelByName: jest.fn((name: string) => {
         if (name === 'unprocessed') return unprocessedLabel as any;
