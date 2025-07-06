@@ -162,7 +162,7 @@ export class AIAnalyzer {
                       description:
                         "Detailed notes about the task, in proper Markdown format.",
                       example:
-                        "Discuss project details with Jane. Because she has been waiting for a response since last week.",
+                        "Discuss project details with Jane because she has been waiting for a response since last week.\n\n[Discussion Link](https://example.com/discussion)",
                       nullable: false,
                     },
                     due_date: {
