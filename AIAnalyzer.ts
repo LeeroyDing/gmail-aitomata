@@ -160,9 +160,12 @@ export class AIAnalyzer {
                       type: "STRING",
                       title: "Task Notes",
                       description:
-                        "Detailed notes about the task, in proper Markdown format. Especially two line breaks for a paragraph.",
+                        "Detailed notes about the task, in proper Markdown format. Especially two line breaks between paragraphs.",
                       example:
-                        "Discuss project details with Jane because she has been waiting for a response since last week.\n\n[Discussion Link](https://example.com/discussion)",
+`Discuss project details with Jane because she has been waiting for a response since last week.
+
+[Discussion Link](https://example.com/discussion)
+`,
                       nullable: false,
                     },
                     due_date: {
