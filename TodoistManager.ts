@@ -64,7 +64,7 @@ export class TodoistManager implements TasksManager {
   }
 
   private findTaskByThreadId(threadId: string, config: Config): any | null {
-    const url = `https://api.todoist.com/rest/v1/tasks?project_id=${config.todoist_project_id}`;
+    const url = `https://api.todoist.com/api/v1/tasks?project_id=${config.todoist_project_id}`;
     const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
       headers: {
         Authorization: `Bearer ${config.todoist_api_key}`,
