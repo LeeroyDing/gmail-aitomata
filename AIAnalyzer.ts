@@ -151,7 +151,7 @@ export class AIAnalyzer {
                       title: "Task Title",
                       description:
                         "A short, easily glanceable summary of the required action.",
-                      exampl: "Reply to Jane about the project deadline",
+                      example: "Reply to Jane about the project deadline",
                       nullable: false,
                     },
                     notes: {
