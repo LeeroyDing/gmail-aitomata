@@ -73,6 +73,12 @@ describe('AIAnalyzer Tests', () => {
     const mockContext = 'Test Context';
     const mockPlan: PlanOfAction = {
       task: { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31' },
+      confidence: {
+        score: 85,
+        reasoning: 'This email requires action',
+        not_higher_reasoning: 'The email is important, but it has nothing to do with my responsibilities and tasks.',
+        not_lower_reasoning: 'There is no action point but it might still be good to know about.'
+      }
     };
 
     (global.UrlFetchApp.fetch as jest.Mock).mockImplementation((url, params) => {
@@ -92,7 +98,14 @@ describe('AIAnalyzer Tests', () => {
 
   it('should generate a plan without a task if the email is not actionable', () => {
     const mockContext = 'Test Context';
-    const mockPlan: PlanOfAction = {};
+    const mockPlan: PlanOfAction = {
+      confidence: {
+        score: 0,
+        reasoning: 'Non-actionable email',
+        not_higher_reasoning: 'No clear action required',
+        not_lower_reasoning: 'Email was processed successfully',
+      },
+    };
 
     (global.UrlFetchApp.fetch as jest.Mock).mockImplementation((url, params) => {
       return Mocks.getMockUrlFetchResponse(200, JSON.stringify({

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Config } from './Config';
+import { Config } from "./Config";
 
 /**
  * Defines the structure of the "Plan of Action" that the AI should return.
@@ -34,32 +34,39 @@ export interface PlanOfAction {
   };
 }
 
-
 export class AIAnalyzer {
   /**
    * Reads the user's context from the 'AI_Context' sheet.
    * @returns {string} The context as a single string.
    */
   public static getContext(): string {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('AI_Context');
+    const sheet =
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName("AI_Context");
     if (!sheet) {
       throw new Error("Sheet 'AI_Context' not found. Please create it.");
     }
     const range = sheet.getDataRange();
     const values = range.getDisplayValues();
-    
+
     // Remove header row and join rows into a single string.
     // Assumes a two-column format (Category, Guideline)
     const header = `| ${values[0][0]} | ${values[0][1]} |`;
-    const separator = '|---|---|';
-    const context = values.slice(1).map(row => `| ${row[0]} | ${row[1]} |`).join('\n');
+    const separator = "|---|---|";
+    const context = values
+      .slice(1)
+      .map((row) => `| ${row[0]} | ${row[1]} |`)
+      .join("\n");
     return `${header}\n${separator}\n${context}`;
   }
 
-  private static formatMessagesForAI(messages: GoogleAppsScript.Gmail.GmailMessage[]): string {
-    return messages.map(msg => {
-      return `From: ${msg.getFrom()}\nTo: ${msg.getTo()}\nSubject: ${msg.getSubject()}\nDate: ${msg.getDate()}\n\n${msg.getPlainBody()}`;
-    }).join('\n\n---\n\n');
+  private static formatMessagesForAI(
+    messages: GoogleAppsScript.Gmail.GmailMessage[]
+  ): string {
+    return messages
+      .map((msg) => {
+        return `From: ${msg.getFrom()}\nTo: ${msg.getTo()}\nSubject: ${msg.getSubject()}\nDate: ${msg.getDate()}\n\n${msg.getPlainBody()}`;
+      })
+      .join("\n\n---\n\n");
   }
 
   /**
@@ -72,9 +79,11 @@ export class AIAnalyzer {
     threads: GoogleAppsScript.Gmail.GmailThread[],
     context: string,
     config: Config
-  ): (PlanOfAction | null)[] {
+  ): PlanOfAction[] {
     if (!config.GEMINI_API_KEY) {
-      throw new Error("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
+      throw new Error(
+        "Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet."
+      );
     }
     if (threads.length === 0) {
       return [];
@@ -83,7 +92,7 @@ export class AIAnalyzer {
     const apiKey = config.GEMINI_API_KEY;
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${config.gemini_model}:generateContent?key=${apiKey}`;
 
-    const threadsContent = threads.map(thread => {
+    const threadsContent = threads.map((thread) => {
       const messages = thread.getMessages();
       const messageContent = this.formatMessagesForAI(messages);
       return `
@@ -92,7 +101,7 @@ export class AIAnalyzer {
         ${messageContent}
         ---
       `;
-    }).join('\n\n');
+    });
 
     const systemPrompt = `
       **SYSTEM PROMPT:**
@@ -106,33 +115,21 @@ export class AIAnalyzer {
 
       **YOUR TASK:**
       Generate an array of "Plan of Action" objects.
-      If an email thread is actionable, create a task. Otherwise, do not include the "task" object for that thread.
-      The "title" should be a very short, easily glanceable summary of the required action (e.g., "Reply to Jane about the project deadline").
-      The "notes" fields must not be null or empty if the task is present.
-      The "due_date" should be in YYYY-MM-DD format.
-      The "priority" should be an integer from 1 (Urgent) to 4 (Normal).
-      For each thread, provide a confidence score (0-100) for the task creation decision. 0 means HELL NO, 100 yes THIS NEEDS TO BE ADDRESSED, LIKE, YESTERDAY. Explain why you gave that score, why it wasn't higher, and why it wasn't lower.
-      ${config.task_service === 'Todoist' ? 'The "notes" field should be in proper Markdown format.' : ''}
-    `;
-
-    const userPrompt = `
-      **EMAIL THREADS:**
-      ---
-      ${threadsContent}
-      ---
-    `;
+      If an email thread is actionable, create a task. Otherwise, do not include the "task" object for that thread.`;
 
     const requestOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      method: 'post',
-      contentType: 'application/json',
+      method: "post",
+      contentType: "application/json",
       payload: JSON.stringify({
         system_instruction: {
           parts: [{ text: systemPrompt }],
         },
         contents: [
           {
-            role: 'user',
-            parts: [{ text: userPrompt }],
+            role: "user",
+            parts: threadsContent.map((threadContent) => {
+              return { text: threadContent };
+            }),
           },
         ],
         generationConfig: {
@@ -141,29 +138,96 @@ export class AIAnalyzer {
             type: "ARRAY",
             items: {
               type: "OBJECT",
+              title: "Plan of Action",
+              description:
+                "A structured plan of action for each email thread, including a task if applicable.",
               properties: {
                 task: {
                   type: "OBJECT",
+                  nullable: true,
                   properties: {
-                    title: { type: "STRING" },
-                    notes: { type: "STRING" },
-                    due_date: { type: "STRING" },
-                    priority: { type: "NUMBER" },
+                    title: {
+                      type: "STRING",
+                      title: "Task Title",
+                      description:
+                        "A short, easily glanceable summary of the required action.",
+                      exampl: "Reply to Jane about the project deadline",
+                      nullable: false,
+                    },
+                    notes: {
+                      type: "STRING",
+                      title: "Task Notes",
+                      description:
+                        "Detailed notes about the task, in proper Markdown format.",
+                      example:
+                        "Discuss project details with Jane. Because she has been waiting for a response since last week.",
+                      nullable: false,
+                    },
+                    due_date: {
+                      type: "STRING",
+                      title: "Due Date",
+                      description:
+                        "The due date for the task in YYYY-MM-DD format or natural language.",
+                      example: "2024-12-31",
+                      nullable: true,
+                    },
+                    priority: {
+                      type: "NUMBER",
+                      title: "Task Priority",
+                      description:
+                        "The priority of the task, from 1 (Urgent) to 4 (Normal).",
+                      example: 1,
+                      nullable: true,
+                    },
                   },
                 },
                 confidence: {
                   type: "OBJECT",
+                  nullable: false,
+                  description:
+                    "Confidence score of the decision over whether to create a task or not.",
                   properties: {
-                    score: { type: "NUMBER" },
-                    reasoning: { type: "STRING" },
-                    not_higher_reasoning: { type: "STRING" },
-                    not_lower_reasoning: { type: "STRING" },
+                    score: {
+                      type: "NUMBER",
+                      title: "Confidence Score",
+                      description:
+                        'A score from 0 to 100 indicating the AI\'s confidence in the task creation decision. 0 means "No need to bother me", 100 means "I should 100% create a task"',
+                      example: 85,
+                      nullable: false,
+                    },
+                    reasoning: {
+                      type: "STRING",
+                      title: "Reasoning",
+                      description:
+                        "The AI's reasoning for the confidence score.",
+                      example:
+                        "The email is from a colleague about an important project deadline, which is why I gave it a high score.",
+                      nullable: false,
+                    },
+                    not_higher_reasoning: {
+                      type: "STRING",
+                      title: "Why Not Higher Reasoning",
+                      description:
+                        "The AI's reasoning for why the confidence score is not higher.",
+                      example:
+                        "The email is important, but it has nothing to do with my responsiblities and tasks.",
+                      nullable: false,
+                    },
+                    not_lower_reasoning: {
+                      type: "STRING",
+                      title: "Why Not Lower Reasoning",
+                      description:
+                        "The AI's reasoning for why the confidence score is not lower.",
+                      example:
+                        "There is no action point but might still be good to know about.",
+                      nullable: false,
+                    },
                   },
                 },
               },
             },
           },
-        }
+        },
       }),
       muteHttpExceptions: true,
     };
@@ -177,14 +241,20 @@ export class AIAnalyzer {
         const jsonResponse = JSON.parse(responseBody);
         if (jsonResponse.candidates && jsonResponse.candidates.length > 0) {
           const plans = jsonResponse.candidates[0].content.parts[0].text;
-          return JSON.parse(plans) as (PlanOfAction | null)[];
+          return JSON.parse(plans) as PlanOfAction[];
         } else {
-          Logger.log(`AI API returned a 200 response, but no candidates were found. Response: ${responseBody}`);
+          Logger.log(
+            `AI API returned a 200 response, but no candidates were found. Response: ${responseBody}`
+          );
           return [];
         }
       } else {
-        console.error(`AI API request failed with code ${responseCode}: ${responseBody}`);
-        Logger.log(`AI API request failed with code ${responseCode}: ${responseBody}`);
+        console.error(
+          `AI API request failed with code ${responseCode}: ${responseBody}`
+        );
+        Logger.log(
+          `AI API request failed with code ${responseCode}: ${responseBody}`
+        );
         return [];
       }
     } catch (e) {
@@ -194,4 +264,3 @@ export class AIAnalyzer {
     }
   }
 }
-

@@ -70,8 +70,13 @@ describe('Processor Tests', () => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
     const mockPlan = {
-      action: { mark_read: true },
       task: { title: 'Test Task', notes: 'Test Notes' },
+      confidence: {
+        score: 90,
+        reasoning: 'Test reasoning',
+        not_higher_reasoning: 'Test not higher reasoning',
+        not_lower_reasoning: 'Test not lower reasoning',
+      },
     };
     (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
     const mockTasksManager = {
@@ -124,8 +129,13 @@ describe('Processor Tests', () => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
     const mockPlan = {
-      action: { mark_read: true },
       task: { title: '', notes: 'Test Notes' },
+      confidence: {
+        score: 90,
+        reasoning: 'Test reasoning',
+        not_higher_reasoning: 'Test not higher reasoning',
+        not_lower_reasoning: 'Test not lower reasoning',
+      },
     };
     (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
     const mockTasksManager = {
@@ -156,7 +166,13 @@ describe('Processor Tests', () => {
     // Verify
     expect(mockTasksManager.upsertTask).toHaveBeenCalledWith(
         mockThread,
-        { title: 'Fallback Subject', notes: 'Test Notes' },
+        { title: 'Fallback Subject', notes: `Test Notes
+--- 
+**Confidence Score:** 90/100
+**Reasoning:** Test reasoning
+**Why not higher:** Test not higher reasoning
+**Why not lower:** Test not lower reasoning
+` },
         mockConfig
     );
   });
@@ -222,7 +238,12 @@ describe('Processor Tests', () => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
     const mockPlan = {
-      action: { mark_read: true }, // This will be overridden
+      confidence: {
+        score: 0,
+        reasoning: 'Non-actionable email',
+        not_higher_reasoning: 'No clear action required',
+        not_lower_reasoning: 'Email was processed successfully',
+      },
     };
     (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
     const mockTasksManager = {

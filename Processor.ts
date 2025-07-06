@@ -64,7 +64,6 @@ export class Processor {
     }
 
     // 4. Execute the plan.
-    Logger.log(`AI plan for thread ${threadId}: ${JSON.stringify(plan)}`);
     let markRead = false;
 
     if (plan.task) {
