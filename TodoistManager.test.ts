@@ -26,7 +26,7 @@ describe("TodoistManager", () => {
     expect(result).toBe(true);
     expect(global.UrlFetchApp.fetch).toHaveBeenCalled();
     expect(global.UrlFetchApp.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("https://api.todoist.com/rest/v1/tasks"),
+      expect.stringContaining("https://api.todoist.com/api/v1/tasks"),
       expect.objectContaining({
         method: "post",
         headers: {

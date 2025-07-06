@@ -16,7 +16,7 @@ export class TodoistManager implements TasksManager {
 
     if (existingTask) {
       // Update existing task
-      const url = `https://api.todoist.com/rest/v1/tasks/${existingTask.id}`;
+      const url = `https://api.todoist.com/api/v1/tasks/${existingTask.id}`;
       const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
         method: "post",
         headers: {
@@ -38,7 +38,7 @@ export class TodoistManager implements TasksManager {
       }
     } else {
       // Create new task
-      const url = "https://api.todoist.com/rest/v1/tasks";
+      const url = "https://api.todoist.com/api/v1/tasks";
       const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
         method: "post",
         headers: {
