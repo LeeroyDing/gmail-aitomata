@@ -26,7 +26,7 @@ export interface PlanOfAction {
     due_date?: string; // YYYY-MM-DD format or natural language
     priority?: number; // 1 (Urgent) to 4 (Normal)
   };
-  confidence?: {
+  confidence: {
     score: number;
     reasoning: string;
     not_higher_reasoning: string;
@@ -111,7 +111,7 @@ export class AIAnalyzer {
       The "notes" fields must not be null or empty if the task is present.
       The "due_date" should be in YYYY-MM-DD format.
       The "priority" should be an integer from 1 (Urgent) to 4 (Normal).
-      For each thread, provide a confidence score (0-100) for the task creation decision. Explain why you gave that score, why it wasn't higher, and why it wasn't lower.
+      For each thread, provide a confidence score (0-100) for the task creation decision. 0 means HELL NO, 100 yes THIS NEEDS TO BE ADDRESSED, LIKE, YESTERDAY. Explain why you gave that score, why it wasn't higher, and why it wasn't lower.
       ${config.task_service === 'Todoist' ? 'The "notes" field should be in proper Markdown format.' : ''}
     `;
 

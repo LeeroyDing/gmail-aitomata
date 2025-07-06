@@ -72,17 +72,15 @@ export class Processor {
         plan.task.title = thread.getFirstMessageSubject();
       }
 
-      if (plan.confidence) {
-        const confidenceDetails = `
+      const confidenceDetails = `
 --- 
 **Confidence Score:** ${plan.confidence.score}/100
 **Reasoning:** ${plan.confidence.reasoning}
 **Why not higher:** ${plan.confidence.not_higher_reasoning}
 **Why not lower:** ${plan.confidence.not_lower_reasoning}
 `;
-        plan.task.notes = `${plan.task.notes || ''}${confidenceDetails}`;
-        Logger.log(`Confidence for thread ${threadId}: ${confidenceDetails}`);
-      }
+      plan.task.notes = `${plan.task.notes || ''}${confidenceDetails}`;
+      Logger.log(`Confidence for thread ${threadId}: ${confidenceDetails}`);
 
       Logger.log(`Creating task for thread ${threadId}: ${plan.task.title}`);
       const taskCreated = tasksManager.upsertTask(thread, plan.task, config);
@@ -97,8 +95,6 @@ export class Processor {
       // If no task, leave the email unread
       Logger.log(`No task created for thread ${threadId}. Leaving email as unread.`);
     }
-
-    
 
     if (markRead) {
       Logger.log(`Marking thread ${threadId} as read.`);
