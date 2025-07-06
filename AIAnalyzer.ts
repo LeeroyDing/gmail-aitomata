@@ -159,16 +159,21 @@ export class AIAnalyzer {
 
       if (responseCode === 200) {
         const jsonResponse = JSON.parse(responseBody);
-        const plans = jsonResponse.candidates[0].content.parts[0].text;
-        return JSON.parse(plans) as (PlanOfAction | null)[];
+        if (jsonResponse.candidates && jsonResponse.candidates.length > 0) {
+          const plans = jsonResponse.candidates[0].content.parts[0].text;
+          return JSON.parse(plans) as (PlanOfAction | null)[];
+        } else {
+          Logger.log(`AI API returned a 200 response, but no candidates were found. Response: ${responseBody}`);
+          return [];
+        }
       } else {
         console.error(`AI API request failed with code ${responseCode}: ${responseBody}`);
         Logger.log(`AI API request failed with code ${responseCode}: ${responseBody}`);
         return [];
       }
     } catch (e) {
-      console.error(`Failed to call AI API: ${e}`);
-      Logger.log(`Failed to call AI API: ${e}`);
+      console.error(`Failed to call or parse AI API response: ${e}`);
+      Logger.log(`Failed to call or parse AI API response: ${e}`);
       return [];
     }
   }
