@@ -21,6 +21,8 @@ import { TasksManager } from './TasksManager';
 
 
 
+import { TasksManagerFactory } from './TasksManagerFactory';
+
 export class Processor {
   /**
    * Processes a single Gmail thread.
@@ -29,13 +31,14 @@ export class Processor {
     thread: GoogleAppsScript.Gmail.GmailThread,
     config: Config,
     aiContext: string,
-    plan: PlanOfAction | null
+    plan: PlanOfAction | null,
+    tasksManager: TasksManager
   ) {
     const threadId = thread.getId();
     console.log(`Processing thread: ${thread.getFirstMessageSubject()} (${threadId})`);
 
-    // 1. Find the last checkpoint for this thread from Google Tasks.
-    const checkpoint = TasksManager.findCheckpoint(threadId, config);
+    // 1. Find the last checkpoint for this thread from the task manager.
+    const checkpoint = tasksManager.findCheckpoint(threadId, config);
     const checkpointTime = checkpoint ? new Date(checkpoint).getTime() : 0;
 
     // 2. Filter for messages that are newer than the checkpoint.
@@ -69,7 +72,7 @@ export class Processor {
         plan.task.title = thread.getFirstMessageSubject();
       }
       Logger.log(`Creating task for thread ${threadId}: ${plan.task.title}`);
-      const taskCreated = TasksManager.upsertTask(thread, plan.task, config);
+      const taskCreated = tasksManager.upsertTask(thread, plan.task, config);
       if (taskCreated) {
         markRead = true;
       } else {
@@ -116,6 +119,7 @@ export class Processor {
       const startTime = new Date();
       const config = Config.getConfig();
       const aiContext = AIAnalyzer.getContext(); // Assuming a static method to get context
+      const tasksManager = TasksManagerFactory.getTasksManager(config);
 
       const unprocessedLabel = GmailApp.getUserLabelByName(config.unprocessed_label);
       if (!unprocessedLabel) {
@@ -144,7 +148,7 @@ export class Processor {
         const thread = unprocessedThreads[i];
         const plan = plans[i];
         try {
-          this.processThread(thread, config, aiContext, plan);
+          this.processThread(thread, config, aiContext, plan, tasksManager);
           processedThreadCount++;
         } catch (e) {
           allPass = false;
