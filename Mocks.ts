@@ -255,15 +255,21 @@ export const Mocks = {
     },
     ...overrides,
   }),
-  createMockTasks: (): any => ({
+  createMockTask: (overrides: Partial<GoogleAppsScript.Tasks.Schema.Task>): GoogleAppsScript.Tasks.Schema.Task => ({
+    id: `task-id-${Math.random()}`,
+    title: 'Test Task',
+    notes: 'Test Notes',
+    updated: new Date().toISOString(),
+    ...overrides,
+  }),
+  createMockTasks: (tasks: GoogleAppsScript.Tasks.Schema.Task[] = []): any => ({
     Tasklists: {
       list: jest.fn(() => ({ items: [Mocks.getMockTaskList({ title: 'My Tasks' })] })),
-      insert: jest.fn(() => Mocks.getMockTaskList({})),
     },
     Tasks: {
-      list: jest.fn(() => ({ items: [] })),
+      list: jest.fn(() => ({ items: tasks })),
       insert: jest.fn(),
-      update: jest.fn(() => Mocks.getMockTask({})),
+      update: jest.fn(),
     },
   }),
 
