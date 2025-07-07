@@ -34,9 +34,27 @@ describe("TodoistManager", () => {
         }
       },
     })) as any;
-    const result = manager.upsertTask(thread, task, mockConfig);
+    const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
     expect(result).toBe(true);
     expect(global.UrlFetchApp.fetch).toHaveBeenCalled();
+    expect(global.UrlFetchApp.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("https://api.todoist.com/api/v1/tasks"),
+      expect.objectContaining({
+        method: "post",
+        headers: {
+          Authorization: `Bearer ${mockConfig.todoist_api_key}`,
+        },
+        contentType: "application/json",
+        payload: JSON.stringify({
+          content: "Test Task",
+          description: "Test Notes\n\n[View in Gmail](https://mail.google.com/mail/u/0/#inbox/thread-id)\n\n-----\n\ngmail_thread_id: " + thread.getId(),
+          project_id: mockConfig.todoist_project_id,
+          due_date: undefined,
+          priority: 4,
+        }),
+        muteHttpExceptions: true,
+      })
+    );
   });
 
   it("should return null when no tasks exist", () => {

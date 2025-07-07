@@ -5,7 +5,8 @@ export class TodoistManager implements TasksManager {
   public upsertTask(
     thread: GoogleAppsScript.Gmail.GmailThread,
     task: Task,
-    config: Config
+    config: Config,
+    permalink: string
   ): boolean {
     const threadId = thread.getId();
     const existingTasks = this.findTaskByThreadId(threadId, config);
@@ -48,7 +49,7 @@ export class TodoistManager implements TasksManager {
         contentType: "application/json",
         payload: JSON.stringify({
           content,
-          description: `${description}\n\n-----\n\ngmail_thread_id: ${threadId}`,
+          description: `${description}\n\n[View in Gmail](${permalink})\n\n-----\n\ngmail_thread_id: ${threadId}`,
           project_id: config.todoist_project_id,
           due_date: task.due_date,
           priority,
