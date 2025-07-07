@@ -8,14 +8,15 @@ export class TodoistManager implements TasksManager {
     config: Config
   ): boolean {
     const threadId = thread.getId();
-    const existingTask = this.findTaskByThreadId(threadId, config);
+    const existingTasks = this.findTaskByThreadId(threadId, config);
 
     const content = task.title;
     const description = task.notes;
     const priority = task.priority;
 
-    if (existingTask) {
+    if (existingTasks.length > 0) {
       // Update existing task
+      const existingTask = existingTasks[0];
       const url = `https://api.todoist.com/api/v1/tasks/${existingTask.id}`;
       const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
         method: "post",
@@ -63,33 +64,48 @@ export class TodoistManager implements TasksManager {
     return true;
   }
 
-  private findTaskByThreadId(threadId: string, config: Config): any | null {
-    const url = `https://api.todoist.com/api/v1/tasks?project_id=${config.todoist_project_id}`;
+  private findTaskByThreadId(threadId: string, config: Config): any[] {
+    const url = `https://api.todoist.com/sync/v9/sync?sync_token=*&resource_types=[\"items\"]`;
     const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
       headers: {
         Authorization: `Bearer ${config.todoist_api_key}`,
       },
     };
     const response = UrlFetchApp.fetch(url, options);
-    interface TodoistTasksResponse {
-      results: Array<{
-        description: string;
-      }>
-    }
-    const tasks = JSON.parse(response.getContentText()) as TodoistTasksResponse;
-    for (const task of tasks.results) {
-      if (
+    const tasks = JSON.parse(response.getContentText());
+    return tasks.items.filter(
+      (task: any) =>
         task.description &&
         task.description.includes(`gmail_thread_id: ${threadId}`)
-      ) {
-        return task;
-      }
-    }
-    return null;
+    );
   }
 
+
+  /**
+   * Finds the latest task activity timestamp for a given thread.
+   *
+   * This method queries the Todoist Sync API for all tasks (active and
+   * completed) associated with the provided thread ID. It then identifies the
+   * task with the most recent 'updated_at' timestamp, which serves as a
+   * checkpoint for processing new messages in the thread.
+   *
+   * @param threadId The ID of the Gmail thread to check.
+   * @param config The configuration object.
+   * @returns The 'updated_at' timestamp of the latest task as an ISO 8601 string, or null if no tasks are found.
+   */
+
   public findCheckpoint(threadId: string, config: Config): string | null {
-    // Implementation for Todoist
-    return null;
+    const allTasks = this.findTaskByThreadId(threadId, config);
+
+    if (allTasks.length === 0) {
+      return null;
+    }
+
+    // Find the task with the most recent 'updated' timestamp
+    const latestTask = allTasks.reduce((latest, current) => {
+      return new Date(latest.updated_at) > new Date(current.updated_at) ? latest : current;
+    });
+
+    return latestTask.updated_at ?? null;
   }
 }
