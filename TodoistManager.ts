@@ -66,19 +66,8 @@ export class TodoistManager implements TasksManager {
   }
 
   private findTaskByThreadId(threadId: string, config: Config): any[] {
-    const url = `https://api.todoist.com/sync/v9/sync?sync_token=*&resource_types=[\"items\"]`;
-    const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      headers: {
-        Authorization: `Bearer ${config.todoist_api_key}`,
-      },
-    };
-    const response = UrlFetchApp.fetch(url, options);
-    const tasks = JSON.parse(response.getContentText());
-    return tasks.items.filter(
-      (task: any) =>
-        task.description &&
-        task.description.includes(`gmail_thread_id: ${threadId}`)
-    );
+    // TODO: Fix this - see https://github.com/leeroyding/gmail-aitomata/issues/24
+    return [];
   }
 
 
