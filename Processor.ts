@@ -78,7 +78,8 @@ export class Processor {
       Logger.log(`Confidence for thread ${threadId}: ${confidenceDetails}`);
 
       Logger.log(`Creating task for thread ${threadId}: ${plan.task.title}`);
-      const taskCreated = tasksManager.upsertTask(thread, plan.task, config);
+      const permalink = thread.getPermalink();
+      const taskCreated = tasksManager.upsertTask(thread, plan.task, config, permalink);
       if (taskCreated) {
         markRead = true;
       } else {

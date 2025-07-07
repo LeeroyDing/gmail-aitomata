@@ -10,6 +10,15 @@ describe('GoogleTasksManager', () => {
   beforeEach(() => {
     manager = new GoogleTasksManager();
     mockConfig = Mocks.createMockConfig();
+    global.Tasks = Mocks.createMockTasks();
+  });
+
+  it('should create a new task', () => {
+    const thread = Mocks.getMockThread({ getFirstMessageSubject: () => 'Test Thread' });
+    const task = { title: 'Test Task', notes: 'Test Notes' };
+    const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
+    expect(result).toBe(true);
+    expect(global.Tasks?.Tasks?.insert).toHaveBeenCalled();
   });
 
   it('should return null when no tasks exist', () => {

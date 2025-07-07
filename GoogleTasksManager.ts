@@ -3,7 +3,7 @@ import { Config } from './Config';
 import { Task, TasksManager } from './TasksManager';
 
 export class GoogleTasksManager implements TasksManager {
-  public upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config): boolean {
+  public upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config, permalink: string): boolean {
     const threadId = thread.getId();
     const taskListId = this.getTaskListId(config.default_task_list_name);
     if (!taskListId) {
@@ -19,7 +19,7 @@ export class GoogleTasksManager implements TasksManager {
       }
     } else {
       // Create new task
-      const newTask = { ...task, notes: `${task.notes}\n\ngmail_thread_id: ${threadId}` };
+      const newTask = { ...task, notes: `${task.notes}\n\nLink to email: ${permalink}\n\ngmail_thread_id: ${threadId}` };
       if (Tasks && Tasks.Tasks) {
         Tasks.Tasks.insert(newTask, taskListId);
       }
