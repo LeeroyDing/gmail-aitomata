@@ -65,6 +65,14 @@ export class TodoistManager implements TasksManager {
     return true;
   }
 
+  public findTask(threadId: string, config: Config): any | null {
+    const tasks = this.findTaskByThreadId(threadId, config);
+    if (tasks.length > 0) {
+      return tasks[0];
+    }
+    return null;
+  }
+
   private findTaskByThreadId(threadId: string, config: Config): any[] {
     // TODO: Fix this - see https://github.com/leeroyding/gmail-aitomata/issues/24
     return [];

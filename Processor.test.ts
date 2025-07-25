@@ -81,6 +81,7 @@ describe('Processor Tests', () => {
     (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
     const mockTasksManager = {
       findCheckpoint: jest.fn().mockReturnValue(null),
+      findTask: jest.fn().mockReturnValue(null),
       upsertTask: jest.fn().mockReturnValue(true),
     };
     (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
@@ -129,6 +130,7 @@ describe('Processor Tests', () => {
     (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([null]);
     const mockTasksManager = {
       findCheckpoint: jest.fn().mockReturnValue(null),
+      findTask: jest.fn().mockReturnValue(null),
       upsertTask: jest.fn(),
     };
     (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
@@ -180,6 +182,7 @@ describe('Processor Tests', () => {
     (AIAnalyzer.generatePlans as jest.Mock).mockReturnValue([mockPlan]);
     const mockTasksManager = {
       findCheckpoint: jest.fn().mockReturnValue(null),
+      findTask: jest.fn().mockReturnValue(null),
       upsertTask: jest.fn(),
     };
     (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
