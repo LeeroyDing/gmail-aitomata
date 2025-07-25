@@ -1,4 +1,4 @@
-import { Mocks, mockConfig } from './Mocks';
+import { Mocks } from './Mocks';
 import { Processor } from './Processor';
 import { Config } from './Config';
 import { AIAnalyzer } from './AIAnalyzer';
@@ -49,8 +49,8 @@ describe('Integration Tests', () => {
       Mocks.getMockSpreadsheet({ 'AI_Context': mockSheet })
     );
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue(mockLabel);
-    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [] });
+    (global.Tasks.Tasklists!.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
+    (global.Tasks.Tasks!.list as jest.Mock).mockReturnValue({ items: [] });
 
     const aiSpy = jest.spyOn(AIAnalyzer, 'generatePlans').mockReturnValue([
       {
@@ -72,7 +72,7 @@ describe('Integration Tests', () => {
 
     // Assert
     expect(aiSpy).toHaveBeenCalled();
-    expect(global.Tasks.Tasks.insert).toHaveBeenCalledWith(
+    expect(global.Tasks.Tasks!.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Follow up on actionable email',
       }),
@@ -101,8 +101,8 @@ describe('Integration Tests', () => {
     });
 
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue(mockLabel);
-    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [] });
+    (global.Tasks.Tasklists!.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
+    (global.Tasks.Tasks!.list as jest.Mock).mockReturnValue({ items: [] });
 
     const aiSpy = jest.spyOn(AIAnalyzer, 'generatePlans').mockReturnValue([
       {
@@ -120,7 +120,7 @@ describe('Integration Tests', () => {
 
     // Assert
     expect(aiSpy).toHaveBeenCalled();
-    expect(global.Tasks.Tasks.insert).not.toHaveBeenCalled();
+    expect(global.Tasks.Tasks!.insert).not.toHaveBeenCalled();
     expect(mockThread.addLabel).toHaveBeenCalledWith(mockLabel);
     expect(mockThread.removeLabel).toHaveBeenCalledWith(mockLabel);
     expect(mockThread.markRead).not.toHaveBeenCalled();
@@ -143,8 +143,8 @@ describe('Integration Tests', () => {
     });
 
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue(mockLabel);
-    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [] });
+    (global.Tasks.Tasklists!.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
+    (global.Tasks.Tasks!.list as jest.Mock).mockReturnValue({ items: [] });
 
     const aiSpy = jest.spyOn(AIAnalyzer, 'generatePlans').mockReturnValue([
       {
@@ -166,7 +166,7 @@ describe('Integration Tests', () => {
 
     // Assert
     expect(aiSpy).toHaveBeenCalled();
-    expect(global.Tasks.Tasks.insert).toHaveBeenCalledTimes(1);
+    expect(global.Tasks.Tasks!.insert).toHaveBeenCalledTimes(1);
     expect(mockThread.addLabel).toHaveBeenCalledWith(mockLabel);
     expect(mockThread.removeLabel).toHaveBeenCalledWith(mockLabel);
     expect(mockThread.markRead).toHaveBeenCalled();
@@ -188,8 +188,8 @@ describe('Integration Tests', () => {
     });
 
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue(mockLabel);
-    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [] });
+    (global.Tasks.Tasklists!.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
+    (global.Tasks.Tasks!.list as jest.Mock).mockReturnValue({ items: [] });
 
     const aiSpy = jest.spyOn(AIAnalyzer, 'generatePlans').mockReturnValue([
       {
@@ -207,7 +207,7 @@ describe('Integration Tests', () => {
 
     // Assert
     expect(aiSpy).toHaveBeenCalled();
-    expect(global.Tasks.Tasks.insert).not.toHaveBeenCalled();
+    expect(global.Tasks.Tasks!.insert).not.toHaveBeenCalled();
     expect(mockThread.addLabel).toHaveBeenCalledWith(mockLabel);
     expect(mockThread.removeLabel).toHaveBeenCalledWith(mockLabel);
     expect(mockThread.markRead).not.toHaveBeenCalled();
@@ -230,8 +230,8 @@ describe('Integration Tests', () => {
     });
 
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue(mockLabel);
-    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [] });
+    (global.Tasks.Tasklists!.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
+    (global.Tasks.Tasks!.list as jest.Mock).mockReturnValue({ items: [] });
 
     const aiSpy = jest.spyOn(AIAnalyzer, 'generatePlans').mockReturnValue([
       {
@@ -253,7 +253,7 @@ describe('Integration Tests', () => {
 
     // Assert
     expect(aiSpy).toHaveBeenCalled();
-    expect(global.Tasks.Tasks.insert).toHaveBeenCalled();
+    expect(global.Tasks.Tasks!.insert).toHaveBeenCalled();
     expect(mockThread.addLabel).toHaveBeenCalledWith(mockLabel);
     expect(mockThread.removeLabel).toHaveBeenCalledWith(mockLabel);
     expect(mockThread.markRead).toHaveBeenCalled();
@@ -281,8 +281,8 @@ describe('Integration Tests', () => {
     });
 
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue(mockLabel);
-    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [existingTask] });
+    (global.Tasks.Tasklists!.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
+    (global.Tasks.Tasks!.list as jest.Mock).mockReturnValue({ items: [existingTask] });
 
     const reopenSpy = jest.spyOn(AIAnalyzer, 'shouldReopenTask').mockReturnValue(true);
     const aiSpy = jest.spyOn(AIAnalyzer, 'generatePlans').mockReturnValue([
@@ -306,7 +306,7 @@ describe('Integration Tests', () => {
     // Assert
     expect(reopenSpy).toHaveBeenCalled();
     expect(aiSpy).toHaveBeenCalled();
-    expect(global.Tasks.Tasks.update).toHaveBeenCalledWith(
+    expect(global.Tasks.Tasks!.update).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'task-1',
         title: 'Updated Task Title',
@@ -341,8 +341,8 @@ describe('Integration Tests', () => {
     });
 
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue(mockLabel);
-    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [existingTask] });
+    (global.Tasks.Tasklists!.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
+    (global.Tasks.Tasks!.list as jest.Mock).mockReturnValue({ items: [existingTask] });
     jest.spyOn(TasksManagerFactory, 'getTasksManager').mockReturnValue({
       findTask: () => existingTask,
       findCheckpoint: () => new Date(Date.now() - 30000).toISOString(),
@@ -358,7 +358,7 @@ describe('Integration Tests', () => {
     // Assert
     expect(reopenSpy).toHaveBeenCalled();
     expect(aiSpy).not.toHaveBeenCalled();
-    expect(global.Tasks.Tasks.update).not.toHaveBeenCalled();
+    expect(global.Tasks.Tasks!.update).not.toHaveBeenCalled();
     expect(mockThread.addLabel).toHaveBeenCalledWith(mockLabel);
     expect(mockThread.removeLabel).toHaveBeenCalledWith(mockLabel);
     expect(mockThread.markRead).not.toHaveBeenCalled();
@@ -387,8 +387,8 @@ describe('Email & Data Edge Cases', () => {
     });
 
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue(mockLabel);
-    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [existingTask] });
+    (global.Tasks.Tasklists!.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
+    (global.Tasks.Tasks!.list as jest.Mock).mockReturnValue({ items: [existingTask] });
     jest.spyOn(TasksManagerFactory, 'getTasksManager').mockReturnValue({
       findTask: () => existingTask,
       findCheckpoint: () => new Date().toISOString(),
@@ -399,8 +399,8 @@ describe('Email & Data Edge Cases', () => {
     Processor.processAllUnprocessedThreads();
 
     // Assert
-    expect(global.Tasks.Tasks.insert).not.toHaveBeenCalled();
-    expect(global.Tasks.Tasks.update).not.toHaveBeenCalled();
+    expect(global.Tasks.Tasks!.insert).not.toHaveBeenCalled();
+    expect(global.Tasks.Tasks!.update).not.toHaveBeenCalled();
   });
 
   it('should handle an email with no body content gracefully', () => {
@@ -418,8 +418,8 @@ describe('Email & Data Edge Cases', () => {
     });
 
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue(mockLabel);
-    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [] });
+    (global.Tasks.Tasklists!.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
+    (global.Tasks.Tasks!.list as jest.Mock).mockReturnValue({ items: [] });
     jest.spyOn(TasksManagerFactory, 'getTasksManager').mockReturnValue({
       findTask: () => null,
       findCheckpoint: () => new Date(Date.now() - 30000).toISOString(),
@@ -442,6 +442,6 @@ describe('Email & Data Edge Cases', () => {
 
     // Assert
     expect(aiSpy).toHaveBeenCalled();
-    expect(global.Tasks.Tasks.insert).not.toHaveBeenCalled();
+    expect(global.Tasks.Tasks!.insert).not.toHaveBeenCalled();
   });
 });
