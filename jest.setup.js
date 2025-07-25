@@ -23,6 +23,7 @@ global.Tasks = {
     list: jest.fn(),
     insert: jest.fn(),
     patch: jest.fn(),
+    update: jest.fn(),
   },
 };
 
@@ -38,4 +39,15 @@ global.UrlFetchApp = {
 
 global.Logger = {
   log: jest.fn(),
+};
+
+global.GmailApp = {
+  getUserLabelByName: jest.fn(),
+};
+
+global.LockService = {
+  getScriptLock: jest.fn(() => ({
+    tryLock: jest.fn().mockReturnValue(true),
+    releaseLock: jest.fn(),
+  })),
 };
