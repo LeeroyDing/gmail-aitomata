@@ -19,12 +19,24 @@ export class GoogleTasksManager implements TasksManager {
       }
     } else {
       // Create new task
-      const newTask = { ...task, notes: `${task.notes}\n\nLink to email: ${permalink}\n\ngmail_thread_id: ${threadId}` };
+      const newTask = { ...task, notes: `${task.notes}
+
+Link to email: ${permalink}
+
+gmail_thread_id: ${threadId}` };
       if (Tasks && Tasks.Tasks) {
         Tasks.Tasks.insert(newTask, taskListId);
       }
     }
     return true;
+  }
+
+  public findTask(threadId: string, config: Config): any | null {
+    const taskListId = this.getTaskListId(config.default_task_list_name);
+    if (!taskListId) {
+      return null;
+    }
+    return this.findTaskByThreadId(taskListId, threadId);
   }
 
   private findTaskByThreadId(taskListId: string, threadId: string): GoogleAppsScript.Tasks.Schema.Task | null {

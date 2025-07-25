@@ -7,10 +7,10 @@
 2.  **Information Gathering & Planning:**
     *   Use tools like `gh issue view`, `read_file`, and `search_file_content` to gather all necessary information for the task.
     *   After gathering information, use the `think_about_collected_information` tool to synthesize my findings.
-    *   Before starting implementation, post a clear plan as a comment on the relevant GitHub issue.
+    *   Before starting implementation, post a clear plan as a comment on the relevant GitHub issue. This comment should outline the proposed changes.
 
 3.  **Implementation:**
-    *   Create a new feature branch using `git checkout -b <branch-name>`.
+    *   After the plan is posted, create a new feature branch using `git checkout -b <branch-name>`.
     *   Before writing any code, use the `think_about_task_adherence` tool to ensure my plan is correct and I'm on the right track.
     *   When modifying code, especially tests, always read the existing file first to avoid overwriting or making incorrect assumptions.
     *   When using the `replace` tool, be very specific with the `old_string` argument, using context from the file to ensure accuracy.
@@ -23,4 +23,12 @@
     *   Stage all changes with `git add .`.
     *   Commit the changes with a descriptive message that links to the fixed issue.
     *   Push the feature branch to the remote repository (`git push origin <branch-name>`).
-    *   Create a pull request using `gh pr create`.
+    *   Create a pull request using `gh pr create`. The body of the pull request should contain a summary of the work that was done, explaining what changes were made and why.
+    *   After creating the pull request, wait for 60 seconds.
+    *   Check the status of the PR checks using `gh pr checks`.
+
+6.  **Review:**
+    *   Use the `codereview` tool to review the pull request.
+    *   Use the `secaudit` tool to perform a security audit of the pull request.
+    *   Use the `precommit` tool to perform a pre-commit check of the pull request.
+    *   Post the summaries of the reviews to the pull request.

@@ -11,4 +11,5 @@ export interface Task {
 export interface TasksManager {
   upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config, permalink: string): boolean;
   findCheckpoint(threadId: string, config: Config): string | null;
+  findTask(threadId: string, config: Config): any | null;
 }

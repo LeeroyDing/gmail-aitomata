@@ -268,4 +268,111 @@ export class AIAnalyzer {
       return [];
     }
   }
+
+  public static shouldReopenTask(
+    task: any,
+    messages: GoogleAppsScript.Gmail.GmailMessage[],
+    context: string,
+    config: Config
+  ): boolean {
+    if (!config.GEMINI_API_KEY) {
+      throw new Error(
+        "Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet."
+      );
+    }
+    if (messages.length === 0) {
+      return false;
+    }
+
+    const apiKey = config.GEMINI_API_KEY;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${config.gemini_model}:generateContent?key=${apiKey}`;
+
+    const messageContent = this.formatMessagesForAI(messages);
+
+    const systemPrompt = `
+      **SYSTEM PROMPT:**
+      You are an assistant helping me manage my email. I have an existing task associated with this email thread.
+      Analyze the new messages in the context of the existing task and my personal context, and decide if the task should be reopened.
+      Return a JSON object with a single boolean property "reopen".
+
+      **MY CONTEXT:**
+      ---
+      ${context}
+      ---
+
+      **EXISTING TASK:**
+      ---
+      Title: ${task.title}
+      Notes: ${task.notes}
+      ---
+
+      **NEW MESSAGES:**
+      ---
+      ${messageContent}
+      ---
+
+      **YOUR TASK:**
+      Generate a JSON object with a single boolean property "reopen".
+      Set "reopen" to true if the new messages contain substantial new information that requires action.
+      Set "reopen" to false if the new messages are minor updates, acknowledgements, or don't require any action.`;
+
+    const requestOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: systemPrompt }],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: "Should I reopen the task based on the new messages?" }],
+          },
+        ],
+        generationConfig: {
+          response_mime_type: "application/json",
+          response_schema: {
+            type: "OBJECT",
+            properties: {
+              reopen: {
+                type: "BOOLEAN",
+              },
+            },
+          },
+        },
+      }),
+      muteHttpExceptions: true,
+    };
+
+    try {
+      const response = UrlFetchApp.fetch(apiUrl, requestOptions);
+      const responseCode = response.getResponseCode();
+      const responseBody = response.getContentText();
+
+      if (responseCode === 200) {
+        const jsonResponse = JSON.parse(responseBody);
+        if (jsonResponse.candidates && jsonResponse.candidates.length > 0) {
+          const decision = JSON.parse(jsonResponse.candidates[0].content.parts[0].text);
+          return decision.reopen;
+        } else {
+          Logger.log(
+            `AI API returned a 200 response, but no candidates were found. Response: ${responseBody}`
+          );
+          return false;
+        }
+      } else {
+        console.error(
+          `AI API request failed with code ${responseCode}: ${responseBody}`
+        );
+        Logger.log(
+          `AI API request failed with code ${responseCode}: ${responseBody}`
+        );
+        return false;
+      }
+    } catch (e) {
+      console.error(`Failed to call or parse AI API response: ${e}`);
+      Logger.log(`Failed to call or parse AI API response: ${e}`);
+      return false;
+    }
+  }
 }

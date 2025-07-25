@@ -56,20 +56,43 @@ export class Processor {
       return;
     }
 
-    // 3. Get a "Plan of Action" from the AI.
+    // 3. Check for existing task and decide whether to reopen.
+    const existingTask = tasksManager.findTask(threadId, config);
+    if (existingTask && newMessages.length > 0) {
+      const reopen = AIAnalyzer.shouldReopenTask(existingTask, newMessages, aiContext, config);
+      if (reopen) {
+        console.log(`Reopening task for thread ${threadId}.`);
+        Logger.log(`Reopening task for thread ${threadId}.`);
+        const newPlans = AIAnalyzer.generatePlans([thread], aiContext, config);
+        if (newPlans.length > 0) {
+          plan = newPlans[0];
+        }
+      } else {
+        console.log(`No substantial new messages for thread ${threadId}. Not reopening task.`);
+        Logger.log(`No substantial new messages for thread ${threadId}. Not reopening task.`);
+        // Mark as processed and return
+        thread.removeLabel(GmailApp.getUserLabelByName(config.unprocessed_label));
+        if (config.processed_label) {
+          thread.addLabel(GmailApp.getUserLabelByName(config.processed_label));
+        }
+        return;
+      }
+    }
+
+    // 4. Get a "Plan of Action" from the AI if no existing task or if reopening.
     if (!plan) {
       console.error(`Failed to get a plan from the AI for thread ${threadId}.`);
       // Potentially move to an error state
       return;
     }
 
-    // 4. Execute the plan.
+    // 5. Execute the plan.
     let markRead = false;
 
     if (plan.task) {
       console.log(`Plan for thread ${threadId}:`, JSON.stringify(plan, null, 2));
       const confidenceDetails = `
---- 
+---
 **Confidence Score:** ${plan.confidence.score}/100
 **Reasoning:** ${plan.confidence.reasoning}
 **Why not higher:** ${plan.confidence.not_higher_reasoning}
@@ -77,14 +100,14 @@ export class Processor {
 `;
       Logger.log(`Confidence for thread ${threadId}: ${confidenceDetails}`);
 
-      Logger.log(`Creating task for thread ${threadId}: ${plan.task.title}`);
+      Logger.log(`Creating or updating task for thread ${threadId}: ${plan.task.title}`);
       const permalink = thread.getPermalink();
       const taskCreated = tasksManager.upsertTask(thread, plan.task, config, permalink);
       if (taskCreated) {
         markRead = true;
       } else {
         // If the task creation fails, leave the email unread and do not mark as processed.
-        Logger.log(`Task creation failed for thread ${threadId}. Leaving email as unread.`);
+        Logger.log(`Task creation/update failed for thread ${threadId}. Leaving email as unread.`);
         return;
       }
     } else {
@@ -100,7 +123,7 @@ export class Processor {
       thread.markUnread();
     }
 
-    // 5. Mark as processed.
+    // 6. Mark as processed.
     thread.removeLabel(GmailApp.getUserLabelByName(config.unprocessed_label));
     if (config.processed_label) {
       thread.addLabel(GmailApp.getUserLabelByName(config.processed_label));
