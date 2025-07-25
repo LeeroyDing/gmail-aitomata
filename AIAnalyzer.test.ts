@@ -123,13 +123,12 @@ describe('AIAnalyzer Tests', () => {
       Mocks.getMockUrlFetchResponse(500, 'Internal Server Error')
     );
 
-    const plan = AIAnalyzer.generatePlans([Mocks.getMockThread({})], 'context', mockConfig);
-    expect(plan).toEqual([]);
+    expect(() => AIAnalyzer.generatePlans([Mocks.getMockThread({})], 'context', mockConfig)).toThrow('Failed to call or parse AI API response: Error: AI API request failed with code 500: Internal Server Error');
   });
 
   it('should throw an error if GEMINI_API_KEY is missing', () => {
-    const emptyConfig = { GEMINI_API_KEY: '' } as Config;
-    expect(() => AIAnalyzer.generatePlans([], 'context', emptyConfig)).toThrow("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
+    const emptyConfig = { ...mockConfig, GEMINI_API_KEY: '' };
+    expect(() => AIAnalyzer.generatePlans([Mocks.getMockThread({})], 'context', emptyConfig)).toThrow("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
   });
 });
 

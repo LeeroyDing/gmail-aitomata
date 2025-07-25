@@ -1,1 +1,1 @@
-The project uses TypeScript, Node.js, and Google Apps Script. It integrates with Gmail, Google Tasks, and Todoist. It uses Jest for testing.
+The project uses TypeScript, Node.js, and Google Apps Script. It integrates with Gmail, Google Tasks, and Todoist. It uses yarn for package management, and Jest for testing.

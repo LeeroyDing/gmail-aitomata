@@ -149,46 +149,90 @@ export class Processor {
       const aiContext = AIAnalyzer.getContext(); // Assuming a static method to get context
       const tasksManager = TasksManagerFactory.getTasksManager(config);
 
-      const unprocessedLabel = GmailApp.getUserLabelByName(config.unprocessed_label);
-      if (!unprocessedLabel) {
+      const labels = {
+        unprocessed: GmailApp.getUserLabelByName(config.unprocessed_label),
+        processed: config.processed_label ? GmailApp.getUserLabelByName(config.processed_label) : null,
+        error: GmailApp.getUserLabelByName(config.processing_failed_label),
+      };
+
+      if (!labels.unprocessed) {
         throw new Error(`Label '${config.unprocessed_label}' not found. Please create it.`);
       }
-      
-      if (config.processed_label) {
-        const processedLabel = GmailApp.getUserLabelByName(config.processed_label);
-        if (!processedLabel) {
-          throw new Error(`Label '${config.processed_label}' not found. Please create it.`);
-        }
+      if (config.processed_label && !labels.processed) {
+        throw new Error(`Label '${config.processed_label}' not found. Please create it.`);
       }
 
-      const unprocessedThreads = unprocessedLabel.getThreads(0, config.max_threads);
+      const unprocessedThreads = labels.unprocessed.getThreads(0, config.max_threads);
       Logger.log(`Found ${unprocessedThreads.length} unprocessed threads.`);
       if (unprocessedThreads.length === 0) {
         Logger.log(`All emails are processed, skip.`);
         return;
       }
 
-      const plans = AIAnalyzer.generatePlans(unprocessedThreads, aiContext, config);
+      const threadsNeedingPlans: GoogleAppsScript.Gmail.GmailThread[] = [];
+      const plans: { [threadId: string]: PlanOfAction | null } = {};
+
+      for (const thread of unprocessedThreads) {
+        const threadId = thread.getId();
+        const checkpoint = tasksManager.findCheckpoint(threadId, config);
+        const checkpointTime = checkpoint ? new Date(checkpoint).getTime() : 0;
+        const newMessages = thread.getMessages().filter(message => {
+          return message.getDate().getTime() > checkpointTime;
+        });
+
+        if (newMessages.length === 0) {
+          thread.removeLabel(labels.unprocessed);
+          if (labels.processed) {
+            thread.addLabel(labels.processed);
+          }
+          continue;
+        }
+
+        const existingTask = tasksManager.findTask(threadId, config);
+        if (existingTask) {
+          if (AIAnalyzer.shouldReopenTask(existingTask, newMessages, aiContext, config)) {
+            threadsNeedingPlans.push(thread);
+          } else {
+            thread.removeLabel(labels.unprocessed);
+            if (labels.processed) {
+              thread.addLabel(labels.processed);
+            }
+          }
+        } else {
+          threadsNeedingPlans.push(thread);
+        }
+      }
+
+      if (threadsNeedingPlans.length > 0) {
+        const generatedPlans = AIAnalyzer.generatePlans(threadsNeedingPlans, aiContext, config);
+        if (generatedPlans.length !== threadsNeedingPlans.length) {
+          throw new Error(`Mismatch between number of threads (${threadsNeedingPlans.length}) and plans received from AI (${generatedPlans.length}). Aborting.`);
+        }
+        for (let i = 0; i < threadsNeedingPlans.length; i++) {
+          const threadId = threadsNeedingPlans[i].getId();
+          plans[threadId] = generatedPlans[i];
+        }
+      }
+
       let processedThreadCount = 0;
       let allPass = true;
 
-      for (let i = 0; i < unprocessedThreads.length; i++) {
-        const thread = unprocessedThreads[i];
-        const plan = plans[i];
-        try {
-          this.processThread(thread, config, aiContext, plan, tasksManager);
-          processedThreadCount++;
-        } catch (e) {
-          allPass = false;
-          const threadId = thread.getId();
-          console.error(`Failed to process thread ${threadId}: ${e}`);
-          Logger.log(`Failed to process thread ${threadId}: ${e}`);
-          // Apply error label and move to inbox for visibility
-          const errorLabel = GmailApp.getUserLabelByName(config.processing_failed_label);
-          if (errorLabel) {
-            thread.addLabel(errorLabel);
+      for (const thread of unprocessedThreads) {
+        const threadId = thread.getId();
+        if (plans[threadId]) {
+          try {
+            this.processThread(thread, config, aiContext, plans[threadId], tasksManager);
+            processedThreadCount++;
+          } catch (e) {
+            allPass = false;
+            console.error(`Failed to process thread ${threadId}: ${e}`);
+            Logger.log(`Failed to process thread ${threadId}: ${e}`);
+            // Apply error label and move to inbox for visibility
+            if (labels.error) {
+              thread.addLabel(labels.error);
+            }
+            thread.moveToInbox();
           }
-          thread.moveToInbox();
         }
       }
 
