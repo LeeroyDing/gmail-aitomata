@@ -204,13 +204,21 @@ export class Processor {
       }
 
       if (threadsNeedingPlans.length > 0) {
-        const generatedPlans = AIAnalyzer.generatePlans(threadsNeedingPlans, aiContext, config);
-        if (generatedPlans.length !== threadsNeedingPlans.length) {
-          throw new Error(`Mismatch between number of threads (${threadsNeedingPlans.length}) and plans received from AI (${generatedPlans.length}). Aborting.`);
-        }
-        for (let i = 0; i < threadsNeedingPlans.length; i++) {
-          const threadId = threadsNeedingPlans[i].getId();
-          plans[threadId] = generatedPlans[i];
+        try {
+          const generatedPlans = AIAnalyzer.generatePlans(threadsNeedingPlans, aiContext, config);
+          if (generatedPlans.length !== threadsNeedingPlans.length) {
+            throw new Error(`Mismatch between number of threads (${threadsNeedingPlans.length}) and plans received from AI (${generatedPlans.length}). Aborting.`);
+          }
+          for (let i = 0; i < threadsNeedingPlans.length; i++) {
+            const threadId = threadsNeedingPlans[i].getId();
+            plans[threadId] = generatedPlans[i];
+          }
+        } catch (e) {
+          Logger.log(`Failed to generate plans from AI: ${e}`);
+          console.error(`Failed to generate plans from AI: ${e}`);
+          // If the batch AI call fails, we can't process any threads.
+          // We'll just exit and let the next run handle it.
+          return;
         }
       }
 
