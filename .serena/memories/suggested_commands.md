@@ -1,1 +1,6 @@
-### Development\n- `yarn install`: Install dependencies.\n- `yarn test`: Run tests.\n\n### Deployment\n- `yarn claspLogin`: Log in to clasp.\n- `yarn deploy`: Deploy the script.\n- `yarn open`: Open the script in the browser.
+*   `yarn test`: Run tests.
+*   `yarn lint`: Lint files.
+*   `yarn lint:fix`: Fix linting errors.
+*   `yarn deploy`: Deploy the script.
+*   `yarn claspLogin`: Login to clasp.
+*   `yarn open`: Open the project in Google Apps Script editor.

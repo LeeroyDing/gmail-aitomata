@@ -1,1 +1,1 @@
-The project is an AI-powered assistant that helps manage Gmail by automatically creating tasks in Google Tasks or Todoist for incoming emails. It summarizes emails, creates tasks, and tracks conversations.
+Gmail Automata is an AI-powered assistant that helps you manage your inbox by automatically creating tasks in your preferred task management service (Google Tasks or Todoist) for every email you receive. It uses a powerful language model to summarize emails and create meaningful tasks.
