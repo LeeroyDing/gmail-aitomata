@@ -63,6 +63,10 @@ export class Processor {
       if (reopen) {
         console.log(`Reopening task for thread ${threadId}.`);
         Logger.log(`Reopening task for thread ${threadId}.`);
+        const newPlans = AIAnalyzer.generatePlans([thread], aiContext, config);
+        if (newPlans.length > 0) {
+          plan = newPlans[0];
+        }
       } else {
         console.log(`No substantial new messages for thread ${threadId}. Not reopening task.`);
         Logger.log(`No substantial new messages for thread ${threadId}. Not reopening task.`);

@@ -26,3 +26,9 @@
     *   Create a pull request using `gh pr create`. The body of the pull request should contain a summary of the work that was done, explaining what changes were made and why.
     *   After creating the pull request, wait for 60 seconds.
     *   Check the status of the PR checks using `gh pr checks`.
+
+6.  **Review:**
+    *   Use the `codereview` tool to review the pull request.
+    *   Use the `secaudit` tool to perform a security audit of the pull request.
+    *   Use the `precommit` tool to perform a pre-commit check of the pull request.
+    *   Post the summaries of the reviews to the pull request.
