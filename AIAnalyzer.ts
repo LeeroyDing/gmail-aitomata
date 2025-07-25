@@ -140,6 +140,10 @@ export class AIAnalyzer {
 
   /**
    * Generates a plan of action for a given set of messages using an AI model.
+   *
+   * This function is designed to be called for all unprocessed threads in a single batch.
+   * The AI model is designed to generate plans for multiple threads at once, and calling it for each thread individually would be much less efficient.
+   *
    * @param {GoogleAppsScript.Gmail.GmailMessage[]} messages - The messages to analyze.
    * @param {string} context - The user's context to guide the AI.
    * @returns {PlanOfAction | null} A structured plan of action, or null if an error occurs.
