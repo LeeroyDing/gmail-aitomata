@@ -11,15 +11,17 @@ export class GoogleTasksManager implements TasksManager {
     }
 
     const existingTask = this.findTaskByThreadId(taskListId, threadId);
+    const { priority, ...taskWithoutPriority } = task; // Omit priority
+
     if (existingTask && existingTask.id) {
       // Update existing task
-      const updatedTask = { ...existingTask, ...task };
+      const updatedTask = { ...existingTask, ...taskWithoutPriority };
       if (Tasks && Tasks.Tasks) {
         Tasks.Tasks.update(updatedTask, taskListId, existingTask.id);
       }
     } else {
       // Create new task
-      const newTask = { ...task, notes: `${task.notes}
+      const newTask = { ...taskWithoutPriority, notes: `${task.notes}
 
 Link to email: ${permalink}
 

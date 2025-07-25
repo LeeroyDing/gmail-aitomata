@@ -34,6 +34,11 @@ export interface PlanOfAction {
   };
 }
 
+export interface ExistingTask {
+  title: string;
+  notes: string;
+}
+
 export class AIAnalyzer {
   /**
    * Reads the user's context from the 'AI_Context' sheet.
@@ -69,6 +74,70 @@ export class AIAnalyzer {
       .join("\n\n---\n\n");
   }
 
+  private static callAI(
+    prompt: string,
+    config: Config,
+    responseSchema: object,
+    userParts: object[]
+  ): any {
+    if (!config.GEMINI_API_KEY) {
+      throw new Error(
+        "Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet."
+      );
+    }
+
+    const apiKey = config.GEMINI_API_KEY;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${config.gemini_model}:generateContent?key=${apiKey}`;
+
+    const requestOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: prompt }],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: userParts,
+          },
+        ],
+        generationConfig: {
+          response_mime_type: "application/json",
+          response_schema: responseSchema,
+        },
+      }),
+      muteHttpExceptions: true,
+    };
+
+    try {
+      const response = UrlFetchApp.fetch(apiUrl, requestOptions);
+      const responseCode = response.getResponseCode();
+      const responseBody = response.getContentText();
+
+      if (responseCode === 200) {
+        const jsonResponse = JSON.parse(responseBody);
+        if (jsonResponse.candidates && jsonResponse.candidates.length > 0) {
+          return JSON.parse(jsonResponse.candidates[0].content.parts[0].text);
+        } else {
+          const errorMessage = `AI API returned a 200 response, but no candidates were found. Response: ${responseBody}`;
+          Logger.log(errorMessage);
+          throw new Error(errorMessage);
+        }
+      } else {
+        const errorMessage = `AI API request failed with code ${responseCode}: ${responseBody}`;
+        console.error(errorMessage);
+        Logger.log(errorMessage);
+        throw new Error(errorMessage);
+      }
+    } catch (e) {
+      const errorMessage = `Failed to call or parse AI API response: ${e}`;
+      console.error(errorMessage);
+      Logger.log(errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
+
   /**
    * Generates a plan of action for a given set of messages using an AI model.
    * @param {GoogleAppsScript.Gmail.GmailMessage[]} messages - The messages to analyze.
@@ -80,17 +149,9 @@ export class AIAnalyzer {
     context: string,
     config: Config
   ): PlanOfAction[] {
-    if (!config.GEMINI_API_KEY) {
-      throw new Error(
-        "Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet."
-      );
-    }
     if (threads.length === 0) {
       return [];
     }
-
-    const apiKey = config.GEMINI_API_KEY;
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${config.gemini_model}:generateContent?key=${apiKey}`;
 
     const threadsContent = threads.map((thread) => {
       const messages = thread.getMessages();
@@ -117,175 +178,121 @@ export class AIAnalyzer {
       Generate an array of "Plan of Action" objects.
       If an email thread is actionable, create a task. Otherwise, do not include the "task" object for that thread.`;
 
-    const requestOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      method: "post",
-      contentType: "application/json",
-      payload: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: systemPrompt }],
-        },
-        contents: [
-          {
-            role: "user",
-            parts: threadsContent.map((threadContent) => {
-              return { text: threadContent };
-            }),
-          },
-        ],
-        generationConfig: {
-          response_mime_type: "application/json",
-          response_schema: {
-            type: "ARRAY",
-            items: {
-              type: "OBJECT",
-              title: "Plan of Action",
-              description:
-                "A structured plan of action for each email thread, including a task if applicable.",
-              properties: {
-                task: {
-                  type: "OBJECT",
-                  nullable: true,
-                  properties: {
-                    title: {
-                      type: "STRING",
-                      title: "Task Title",
-                      description:
-                        "A short, easily glanceable summary of the required action.",
-                      example: "Reply to Jane about the project deadline",
-                      maxLength: 100,
-                      minLength: 20,
-                      nullable: false,
-                    },
-                    notes: {
-                      type: "STRING",
-                      title: "Task Notes",
-                      description:
-                        "Detailed notes about the task, in proper Markdown format. Especially two line breaks between paragraphs.",
-                      example:
+    const responseSchema = {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        title: "Plan of Action",
+        description:
+          "A structured plan of action for each email thread, including a task if applicable.",
+        properties: {
+          task: {
+            type: "OBJECT",
+            nullable: true,
+            properties: {
+              title: {
+                type: "STRING",
+                title: "Task Title",
+                description:
+                  "A short, easily glanceable summary of the required action.",
+                example: "Reply to Jane about the project deadline",
+                maxLength: 100,
+                minLength: 20,
+                nullable: false,
+              },
+              notes: {
+                type: "STRING",
+                title: "Task Notes",
+                description:
+                  "Detailed notes about the task, in proper Markdown format. Especially two line breaks between paragraphs.",
+                example:
 `Discuss project details with Jane because she has been waiting for a response since last week.
 
 [Discussion Link](https://example.com/discussion)
 `,
-                      nullable: false,
-                    },
-                    due_date: {
-                      type: "STRING",
-                      title: "Due Date",
-                      description:
-                        "The due date for the task in YYYY-MM-DD format or natural language.",
-                      example: "2024-12-31",
-                      nullable: true,
-                    },
-                    priority: {
-                      type: "NUMBER",
-                      title: "Task Priority",
-                      description:
-                        "The priority of the task, from 1 (Urgent) to 4 (Normal).",
-                      example: 1,
-                      nullable: true,
-                    },
-                  },
-                },
-                confidence: {
-                  type: "OBJECT",
-                  nullable: false,
-                  description:
-                    "Confidence score of the decision over whether to create a task or not.",
-                  properties: {
-                    score: {
-                      type: "NUMBER",
-                      title: "Confidence Score",
-                      description:
-                        'A score from 0 to 100 indicating the AI\'s confidence in the task creation decision. 0 means "No need to bother me", 100 means "I should 100% create a task"',
-                      example: 85,
-                      nullable: false,
-                    },
-                    reasoning: {
-                      type: "STRING",
-                      title: "Reasoning",
-                      description:
-                        "The AI's reasoning for the confidence score.",
-                      example:
-                        "The email is from a colleague about an important project deadline, which is why I gave it a high score.",
-                      nullable: false,
-                    },
-                    not_higher_reasoning: {
-                      type: "STRING",
-                      title: "Why Not Higher Reasoning",
-                      description:
-                        "The AI's reasoning for why the confidence score is not higher.",
-                      example:
-                        "The email is important, but it has nothing to do with my responsiblities and tasks.",
-                      nullable: false,
-                    },
-                    not_lower_reasoning: {
-                      type: "STRING",
-                      title: "Why Not Lower Reasoning",
-                      description:
-                        "The AI's reasoning for why the confidence score is not lower.",
-                      example:
-                        "There is no action point but might still be good to know about.",
-                      nullable: false,
-                    },
-                  },
-                },
+                nullable: false,
+              },
+              due_date: {
+                type: "STRING",
+                title: "Due Date",
+                description:
+                  "The due date for the task in YYYY-MM-DD format or natural language.",
+                example: "2024-12-31",
+                nullable: true,
+              },
+              priority: {
+                type: "NUMBER",
+                title: "Task Priority",
+                description:
+                  "The priority of the task, from 1 (Urgent) to 4 (Normal).",
+                example: 1,
+                nullable: true,
+              },
+            },
+          },
+          confidence: {
+            type: "OBJECT",
+            nullable: false,
+            description:
+              "Confidence score of the decision over whether to create a task or not.",
+            properties: {
+              score: {
+                type: "NUMBER",
+                title: "Confidence Score",
+                description:
+                  'A score from 0 to 100 indicating the AI\'s confidence in the task creation decision. 0 means "No need to bother me", 100 means "I should 100% create a task"',
+                example: 85,
+                nullable: false,
+              },
+              reasoning: {
+                type: "STRING",
+                title: "Reasoning",
+                description:
+                  "The AI\'s reasoning for the confidence score.",
+                example:
+                  "The email is from a colleague about an important project deadline, which is why I gave it a high score.",
+                nullable: false,
+              },
+              not_higher_reasoning: {
+                type: "STRING",
+                title: "Why Not Higher Reasoning",
+                description:
+                  "The AI\'s reasoning for why the confidence score is not higher.",
+                example:
+                  "The email is important, but it has nothing to do with my responsiblities and tasks.",
+                nullable: false,
+              },
+              not_lower_reasoning: {
+                type: "STRING",
+                title: "Why Not Lower Reasoning",
+                description:
+                  "The AI\'s reasoning for why the confidence score is not lower.",
+                example:
+                  "There is no action point but might still be good to know about.",
+                nullable: false,
               },
             },
           },
         },
-      }),
-      muteHttpExceptions: true,
+      },
     };
 
-    try {
-      const response = UrlFetchApp.fetch(apiUrl, requestOptions);
-      const responseCode = response.getResponseCode();
-      const responseBody = response.getContentText();
+    const userParts = threadsContent.map((threadContent) => {
+      return { text: threadContent };
+    });
 
-      if (responseCode === 200) {
-        const jsonResponse = JSON.parse(responseBody);
-        if (jsonResponse.candidates && jsonResponse.candidates.length > 0) {
-          const plans = jsonResponse.candidates[0].content.parts[0].text;
-          return JSON.parse(plans) as PlanOfAction[];
-        } else {
-          Logger.log(
-            `AI API returned a 200 response, but no candidates were found. Response: ${responseBody}`
-          );
-          return [];
-        }
-      } else {
-        console.error(
-          `AI API request failed with code ${responseCode}: ${responseBody}`
-        );
-        Logger.log(
-          `AI API request failed with code ${responseCode}: ${responseBody}`
-        );
-        return [];
-      }
-    } catch (e) {
-      console.error(`Failed to call or parse AI API response: ${e}`);
-      Logger.log(`Failed to call or parse AI API response: ${e}`);
-      return [];
-    }
+    return this.callAI(systemPrompt, config, responseSchema, userParts);
   }
 
   public static shouldReopenTask(
-    task: any,
+    task: ExistingTask,
     messages: GoogleAppsScript.Gmail.GmailMessage[],
     context: string,
     config: Config
   ): boolean {
-    if (!config.GEMINI_API_KEY) {
-      throw new Error(
-        "Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet."
-      );
-    }
     if (messages.length === 0) {
       return false;
     }
-
-    const apiKey = config.GEMINI_API_KEY;
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${config.gemini_model}:generateContent?key=${apiKey}`;
 
     const messageContent = this.formatMessagesForAI(messages);
 
@@ -316,63 +323,18 @@ export class AIAnalyzer {
       Set "reopen" to true if the new messages contain substantial new information that requires action.
       Set "reopen" to false if the new messages are minor updates, acknowledgements, or don't require any action.`;
 
-    const requestOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      method: "post",
-      contentType: "application/json",
-      payload: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: systemPrompt }],
+    const responseSchema = {
+      type: "OBJECT",
+      properties: {
+        reopen: {
+          type: "BOOLEAN",
         },
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: "Should I reopen the task based on the new messages?" }],
-          },
-        ],
-        generationConfig: {
-          response_mime_type: "application/json",
-          response_schema: {
-            type: "OBJECT",
-            properties: {
-              reopen: {
-                type: "BOOLEAN",
-              },
-            },
-          },
-        },
-      }),
-      muteHttpExceptions: true,
+      },
     };
 
-    try {
-      const response = UrlFetchApp.fetch(apiUrl, requestOptions);
-      const responseCode = response.getResponseCode();
-      const responseBody = response.getContentText();
+    const userParts = [{ text: "Should I reopen the task based on the new messages?" }];
 
-      if (responseCode === 200) {
-        const jsonResponse = JSON.parse(responseBody);
-        if (jsonResponse.candidates && jsonResponse.candidates.length > 0) {
-          const decision = JSON.parse(jsonResponse.candidates[0].content.parts[0].text);
-          return decision.reopen;
-        } else {
-          Logger.log(
-            `AI API returned a 200 response, but no candidates were found. Response: ${responseBody}`
-          );
-          return false;
-        }
-      } else {
-        console.error(
-          `AI API request failed with code ${responseCode}: ${responseBody}`
-        );
-        Logger.log(
-          `AI API request failed with code ${responseCode}: ${responseBody}`
-        );
-        return false;
-      }
-    } catch (e) {
-      console.error(`Failed to call or parse AI API response: ${e}`);
-      Logger.log(`Failed to call or parse AI API response: ${e}`);
-      return false;
-    }
+    const decision = this.callAI(systemPrompt, config, responseSchema, userParts);
+    return decision.reopen;
   }
 }

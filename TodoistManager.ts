@@ -74,8 +74,36 @@ export class TodoistManager implements TasksManager {
   }
 
   private findTaskByThreadId(threadId: string, config: Config): any[] {
-    // TODO: Fix this - see https://github.com/leeroyding/gmail-aitomata/issues/24
-    return [];
+    if (!config.todoist_api_key) {
+      Logger.log('Todoist API key is not configured.');
+      return [];
+    }
+    const url = `https://api.todoist.com/api/v2/tasks`;
+    const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+      method: "get",
+      headers: {
+        Authorization: `Bearer ${config.todoist_api_key}`,
+      },
+      muteHttpExceptions: true,
+    };
+
+    try {
+      const response = UrlFetchApp.fetch(url, options);
+      if (response.getResponseCode() === 200) {
+        const tasks = JSON.parse(response.getContentText());
+        // The Todoist REST API v2 doesn't support filtering by description server-side.
+        // You must filter client-side.
+        return tasks.filter((task: any) => 
+          task.description && task.description.includes(`gmail_thread_id: ${threadId}`)
+        );
+      } else {
+        Logger.log(`Failed to fetch tasks from Todoist: ${response.getContentText()}`);
+        return [];
+      }
+    } catch (e) {
+      Logger.log(`Exception fetching tasks from Todoist: ${e}`);
+      return [];
+    }
   }
 
 
