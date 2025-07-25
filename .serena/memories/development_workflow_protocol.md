@@ -16,7 +16,7 @@
     *   When using the `replace` tool, be very specific with the `old_string` argument, using context from the file to ensure accuracy.
 
 4.  **Verification & Completion:**
-    *   After making changes, run all relevant tests (`npm test`) to verify the solution.
+    *   After making changes, run all relevant tests (`yarn test -o`) to verify the solution.
     *   Once I believe the task is complete, use the `think_about_whether_you_are_done` tool to reflect and confirm all requirements have been met.
 
 5.  **Committing & Creating a Pull Request:**
