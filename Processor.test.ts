@@ -70,7 +70,7 @@ describe('Processor Tests', () => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
     const mockPlan = {
-      task: { title: 'Test Task', notes: 'Test Notes' },
+      task: { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31', priority: 1 },
       confidence: {
         score: 90,
         reasoning: 'Test reasoning',
@@ -223,7 +223,7 @@ describe('Processor Tests', () => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
     const mockPlan = {
-      task: { title: 'Test Task', notes: 'Test Notes' },
+      task: { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31', priority: 1 },
       confidence: {
         score: 90,
         reasoning: 'Test reasoning',
@@ -273,7 +273,7 @@ describe('Processor Tests', () => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
     const mockPlan = {
-      task: { title: 'Test Task', notes: 'Test Notes' },
+      task: { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31', priority: 1 },
       confidence: {
         score: 90,
         reasoning: 'Test reasoning',

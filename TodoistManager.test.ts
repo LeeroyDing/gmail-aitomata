@@ -19,7 +19,7 @@ describe("TodoistManager", () => {
     const task = {
       title: "Test Task",
       notes: "Test Notes",
-      due_date: undefined,
+      due_date: "2025-12-31",
       priority: 4,
     };
     global.UrlFetchApp.fetch = jest.fn((url: string) => ({
@@ -49,7 +49,7 @@ describe("TodoistManager", () => {
           content: "Test Task",
           description: "Test Notes\n\n[View in Gmail](https://mail.google.com/mail/u/0/#inbox/thread-id)\n\n-----\n\ngmail_thread_id: " + thread.getId(),
           project_id: mockConfig.todoist_project_id,
-          due_date: undefined,
+          due_date: "2025-12-31",
           priority: 4,
         }),
         muteHttpExceptions: true,

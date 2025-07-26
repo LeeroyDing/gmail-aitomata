@@ -78,7 +78,7 @@ export class TodoistManager implements TasksManager {
       Logger.log('Todoist API key is not configured.');
       return [];
     }
-    const url = `https://api.todoist.com/api/v2/tasks`;
+    const url = `https://api.todoist.com/api/v1/tasks`;
     const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
       method: "get",
       headers: {
@@ -91,8 +91,6 @@ export class TodoistManager implements TasksManager {
       const response = UrlFetchApp.fetch(url, options);
       if (response.getResponseCode() === 200) {
         const tasks = JSON.parse(response.getContentText());
-        // The Todoist REST API v2 doesn't support filtering by description server-side.
-        // You must filter client-side.
         return tasks.filter((task: any) => 
           task.description && task.description.includes(`gmail_thread_id: ${threadId}`)
         );

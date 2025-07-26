@@ -4,8 +4,8 @@ import { Config } from './Config';
 export interface Task {
   title: string;
   notes: string;
-  due_date?: string;
-  priority?: number;
+  due_date: string;
+  priority: number;
 }
 
 export interface TasksManager {

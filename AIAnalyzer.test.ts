@@ -72,7 +72,7 @@ describe('AIAnalyzer Tests', () => {
   it('should generate a plan by calling the AI API', () => {
     const mockContext = 'Test Context';
     const mockPlan: PlanOfAction = {
-      task: { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31' },
+      task: { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31', priority: 1 },
       confidence: {
         score: 85,
         reasoning: 'This email requires action',

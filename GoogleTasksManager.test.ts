@@ -15,7 +15,7 @@ describe('GoogleTasksManager', () => {
 
   it('should create a new task', () => {
     const thread = Mocks.getMockThread({ getFirstMessageSubject: () => 'Test Thread' });
-    const task = { title: 'Test Task', notes: 'Test Notes' };
+    const task = { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31', priority: 1 };
     const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
     expect(result).toBe(true);
     expect(global.Tasks?.Tasks?.insert).toHaveBeenCalled();
