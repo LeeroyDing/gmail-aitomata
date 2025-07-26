@@ -105,6 +105,28 @@ export class TodoistManager implements TasksManager {
   }
 
 
+  public reopenTask(taskId: string): boolean {
+    const config = Config.getConfig();
+    if (!config.todoist_api_key) {
+      Logger.log('Todoist API key is not configured.');
+      return false;
+    }
+    const url = `https://api.todoist.com/api/v1/tasks/${taskId}/reopen`;
+    const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+      method: "post",
+      headers: {
+        Authorization: `Bearer ${config.todoist_api_key}`,
+      },
+      muteHttpExceptions: true,
+    };
+    const response = UrlFetchApp.fetch(url, options);
+    if (response.getResponseCode() >= 400) {
+      Logger.log(`Todoist API error: ${response.getContentText()}`);
+      return false;
+    }
+    return true;
+  }
+
   /**
    * Finds the latest task activity timestamp for a given thread.
    *

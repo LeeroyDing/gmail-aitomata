@@ -11,6 +11,7 @@ describe('GoogleTasksManager', () => {
     manager = new GoogleTasksManager();
     mockConfig = Mocks.createMockConfig();
     global.Tasks = Mocks.createMockTasks();
+    (global.Tasks.Tasks.get as jest.Mock) = jest.fn();
   });
 
   it('should create a new task', () => {
@@ -67,5 +68,19 @@ describe('GoogleTasksManager', () => {
     global.Tasks = Mocks.createMockTasks([activeTask, completedTask]);
     const checkpoint = manager.findCheckpoint('thread-123', mockConfig);
     expect(checkpoint).toBe('2025-07-08T11:00:00Z');
+  });
+
+  it('should reopen a task', () => {
+    const task = Mocks.createMockTask({ id: 'task-123', status: 'completed' });
+    (global.Tasks.Tasks.get as jest.Mock).mockReturnValue(task);
+    jest.spyOn(Config, 'getConfig').mockReturnValue(mockConfig);
+    jest.spyOn(manager as any, 'getTaskListId').mockReturnValue('tasklist-123');
+    const result = manager.reopenTask('task-123');
+    expect(result).toBe(true);
+    expect(global.Tasks?.Tasks?.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'task-123', status: 'needsAction' }),
+      'tasklist-123',
+      'task-123'
+    );
   });
 });

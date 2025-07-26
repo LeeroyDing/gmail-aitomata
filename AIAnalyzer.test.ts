@@ -16,7 +16,7 @@
 
 import './jest.setup.js';
 import { Mocks } from './Mocks';
-import { AIAnalyzer, PlanOfAction } from './AIAnalyzer';
+import { AIAnalyzer, AIParsedResponse } from './AIAnalyzer';
 import { Config } from './Config';
 
 jest.mock('./Config');
@@ -46,6 +46,7 @@ describe('AIAnalyzer Tests', () => {
     global.UrlFetchApp = {
       fetch: jest.fn(),
     } as any;
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   it('should read context from the AI_Context sheet', () => {
@@ -59,7 +60,13 @@ describe('AIAnalyzer Tests', () => {
     );
 
     const context = AIAnalyzer.getContext();
-    expect(context).toBe('| Category | Guideline |\n|---|---|\n| My Role | Project Manager |\n| Key Projects | Project Phoenix |');
+    const expectedContext = [
+      '| Category | Guideline |',
+      '|---|---|',
+      '| My Role | Project Manager |',
+      '| Key Projects | Project Phoenix |',
+    ].join('\n');
+    expect(context).toBe(expectedContext);
   });
 
   it('should throw an error if the AI_Context sheet is not found', () => {
@@ -71,7 +78,8 @@ describe('AIAnalyzer Tests', () => {
 
   it('should generate a plan by calling the AI API', () => {
     const mockContext = 'Test Context';
-    const mockPlan: PlanOfAction = {
+    const mockPlan: AIParsedResponse = {
+      action: 'CREATE_TASK',
       task: { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31', priority: 1 },
       confidence: {
         score: 85,
@@ -92,13 +100,14 @@ describe('AIAnalyzer Tests', () => {
       }));
     });
 
-    const plan = AIAnalyzer.generatePlans([Mocks.getMockThread({ getFirstMessageSubject: () => 'Test Subject' })], mockContext, mockConfig);
+    const plan = AIAnalyzer.generatePlans([{ thread: Mocks.getMockThread({ getFirstMessageSubject: () => 'Test Subject' }) }], mockContext, mockConfig);
     expect(plan[0]).toEqual(mockPlan);
   });
 
   it('should generate a plan without a task if the email is not actionable', () => {
     const mockContext = 'Test Context';
-    const mockPlan: PlanOfAction = {
+    const mockPlan: AIParsedResponse = {
+      action: 'DO_NOTHING',
       confidence: {
         score: 0,
         reasoning: 'Non-actionable email',
@@ -113,7 +122,7 @@ describe('AIAnalyzer Tests', () => {
       }));
     });
 
-    const plan = AIAnalyzer.generatePlans([Mocks.getMockThread({})], mockContext, mockConfig);
+    const plan = AIAnalyzer.generatePlans([{ thread: Mocks.getMockThread({}) }], mockContext, mockConfig);
     expect(plan[0]).toEqual(mockPlan);
     expect(plan[0]?.task).toBeUndefined();
   });
@@ -123,12 +132,12 @@ describe('AIAnalyzer Tests', () => {
       Mocks.getMockUrlFetchResponse(500, 'Internal Server Error')
     );
 
-    expect(() => AIAnalyzer.generatePlans([Mocks.getMockThread({})], 'context', mockConfig)).toThrow('Failed to call or parse AI API response: Error: AI API request failed with code 500: Internal Server Error');
+    expect(() => AIAnalyzer.generatePlans([{ thread: Mocks.getMockThread({}) }], 'context', mockConfig)).toThrow('Failed to call or parse AI API response: Error: AI API request failed with code 500: Internal Server Error');
   });
 
   it('should throw an error if GEMINI_API_KEY is missing', () => {
     const emptyConfig = { ...mockConfig, GEMINI_API_KEY: '' };
-    expect(() => AIAnalyzer.generatePlans([Mocks.getMockThread({})], 'context', emptyConfig)).toThrow("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
+    expect(() => AIAnalyzer.generatePlans([{ thread: Mocks.getMockThread({}) }], 'context', emptyConfig)).toThrow("Config 'GEMINI_API_KEY' not found. Please set it in the 'configs' sheet.");
   });
 });
 
