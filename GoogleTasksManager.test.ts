@@ -14,12 +14,34 @@ describe('GoogleTasksManager', () => {
     (global.Tasks.Tasks.get as jest.Mock) = jest.fn();
   });
 
-  it('should create a new task', () => {
+  it('should create a new task with a permalink', () => {
     const thread = Mocks.getMockThread({ getFirstMessageSubject: () => 'Test Thread' });
     const task = { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31', priority: 1 };
     const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
     expect(result).toBe(true);
-    expect(global.Tasks?.Tasks?.insert).toHaveBeenCalled();
+    expect(global.Tasks?.Tasks?.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notes: expect.stringContaining("Link to email: https://mail.google.com/mail/u/0/#inbox/thread-id"),
+      }),
+      "task-list-id"
+    );
+  });
+
+  it('should update an existing task with a permalink', () => {
+    const thread = Mocks.getMockThread({ getFirstMessageSubject: () => 'Test Thread' });
+    const task = { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31', priority: 1 };
+    const existingTask = Mocks.createMockTask({ id: 'task-123', notes: 'gmail_thread_id: ' + thread.getId() });
+    global.Tasks = Mocks.createMockTasks([existingTask]);
+    const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
+    expect(result).toBe(true);
+    expect(global.Tasks?.Tasks?.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'task-123',
+        notes: expect.stringContaining("Test Notes"),
+      }),
+      "task-list-id",
+      "task-123"
+    );
   });
 
   it('should return null when no tasks exist', () => {

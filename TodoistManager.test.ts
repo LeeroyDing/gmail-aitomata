@@ -12,7 +12,7 @@ describe("TodoistManager", () => {
     global.UrlFetchApp = Mocks.createMockUrlFetchApp();
   });
 
-  it("should create a new task", () => {
+  it("should create a new task with a permalink", () => {
     const thread = Mocks.getMockThread({
       getFirstMessageSubject: () => "Test Thread",
     });
@@ -22,19 +22,45 @@ describe("TodoistManager", () => {
       due_date: "2025-12-31",
       priority: 4,
     };
-    global.UrlFetchApp.fetch = jest.fn((url: string) => ({
+    global.UrlFetchApp.fetch = jest.fn((url: string, options: any) => ({
       getResponseCode: () => 200,
       getContentText: () => {
         if (url.includes("tasks")) {
-          return JSON.stringify([]);
-        } else {
+          const payload = JSON.parse(options.payload);
+          expect(payload.description).toContain("[View in Gmail](https://mail.google.com/mail/u/0/#inbox/thread-id)");
           return JSON.stringify({ id: "12345" });
         }
+        return JSON.stringify([]);
       },
     })) as any;
     const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
     expect(result).toBe(true);
-    expect(global.UrlFetchApp.fetch).toHaveBeenCalled();
+  });
+
+  it("should update an existing task with a permalink", () => {
+    const thread = Mocks.getMockThread({
+      getFirstMessageSubject: () => "Test Thread",
+    });
+    const task = {
+      title: "Test Task",
+      notes: "Test Notes",
+      due_date: "2025-12-31",
+      priority: 4,
+    };
+    const existingTask = { id: 'task-123', description: 'gmail_thread_id: ' + thread.getId() };
+    global.UrlFetchApp.fetch = jest.fn((url: string, options: any) => ({
+      getResponseCode: () => 200,
+      getContentText: () => {
+        if (url.includes("tasks") && options.method === 'post') {
+          const payload = JSON.parse(options.payload);
+          expect(payload.description).toContain("[View in Gmail](https://mail.google.com/mail/u/0/#inbox/thread-id)");
+          return JSON.stringify({ id: "12345" });
+        }
+        return JSON.stringify([existingTask]);
+      },
+    })) as any;
+    const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
+    expect(result).toBe(true);
   });
 
   it("should return null when no tasks exist", () => {
