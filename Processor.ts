@@ -74,7 +74,6 @@ export class Processor {
         const threadId = thread.getId();
 
         try {
-          console.log(`Executing plan for thread ${threadId}: ${plan.action}`);
           Logger.log(`Executing plan for thread ${threadId}: ${plan.action}`);
 
           let markRead = false;
