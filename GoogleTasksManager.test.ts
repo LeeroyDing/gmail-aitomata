@@ -11,14 +11,37 @@ describe('GoogleTasksManager', () => {
     manager = new GoogleTasksManager();
     mockConfig = Mocks.createMockConfig();
     global.Tasks = Mocks.createMockTasks();
+    (global.Tasks.Tasks.get as jest.Mock) = jest.fn();
   });
 
-  it('should create a new task', () => {
+  it('should create a new task with a permalink', () => {
     const thread = Mocks.getMockThread({ getFirstMessageSubject: () => 'Test Thread' });
     const task = { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31', priority: 1 };
     const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
     expect(result).toBe(true);
-    expect(global.Tasks?.Tasks?.insert).toHaveBeenCalled();
+    expect(global.Tasks?.Tasks?.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notes: expect.stringContaining("Link to email: https://mail.google.com/mail/u/0/#inbox/thread-id"),
+      }),
+      "task-list-id"
+    );
+  });
+
+  it('should update an existing task with a permalink', () => {
+    const thread = Mocks.getMockThread({ getFirstMessageSubject: () => 'Test Thread' });
+    const task = { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31', priority: 1 };
+    const existingTask = Mocks.createMockTask({ id: 'task-123', notes: 'gmail_thread_id: ' + thread.getId() });
+    global.Tasks = Mocks.createMockTasks([existingTask]);
+    const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
+    expect(result).toBe(true);
+    expect(global.Tasks?.Tasks?.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'task-123',
+        notes: expect.stringContaining("Test Notes"),
+      }),
+      "task-list-id",
+      "task-123"
+    );
   });
 
   it('should return null when no tasks exist', () => {
@@ -67,5 +90,19 @@ describe('GoogleTasksManager', () => {
     global.Tasks = Mocks.createMockTasks([activeTask, completedTask]);
     const checkpoint = manager.findCheckpoint('thread-123', mockConfig);
     expect(checkpoint).toBe('2025-07-08T11:00:00Z');
+  });
+
+  it('should reopen a task', () => {
+    const task = Mocks.createMockTask({ id: 'task-123', status: 'completed' });
+    (global.Tasks.Tasks.get as jest.Mock).mockReturnValue(task);
+    jest.spyOn(Config, 'getConfig').mockReturnValue(mockConfig);
+    jest.spyOn(manager as any, 'getTaskListId').mockReturnValue('tasklist-123');
+    const result = manager.reopenTask('task-123');
+    expect(result).toBe(true);
+    expect(global.Tasks?.Tasks?.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'task-123', status: 'needsAction' }),
+      'tasklist-123',
+      'task-123'
+    );
   });
 });

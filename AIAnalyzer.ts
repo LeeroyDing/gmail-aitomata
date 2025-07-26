@@ -20,6 +20,7 @@ import { Config } from "./Config";
  * Defines the structure of the "Plan of Action" that the AI should return.
  */
 export interface PlanOfAction {
+  action: 'CREATE_TASK' | 'UPDATE_TASK' | 'REOPEN_AND_UPDATE_TASK' | 'DO_NOTHING';
   task?: {
     title: string;
     notes: string;
@@ -34,9 +35,16 @@ export interface PlanOfAction {
   };
 }
 
+export interface AIParsedResponse extends PlanOfAction {
+  // This interface is now the same as PlanOfAction, but it's kept for clarity
+  // in case we want to add more properties to the response in the future
+  // that are not part of the "plan of action" itself.
+}
+
 export interface ExistingTask {
   title: string;
   notes: string;
+  status: 'needsAction' | 'completed';
 }
 
 export class AIAnalyzer {
@@ -146,41 +154,31 @@ export class AIAnalyzer {
    *
    * @param {GoogleAppsScript.Gmail.GmailMessage[]} messages - The messages to analyze.
    * @param {string} context - The user's context to guide the AI.
-   * @returns {PlanOfAction | null} A structured plan of action, or null if an error occurs.
+   * @returns {AIParsedResponse[]} A structured plan of action for each thread.
    */
   public static generatePlans(
-    threads: GoogleAppsScript.Gmail.GmailThread[],
+    threads: {
+      thread: GoogleAppsScript.Gmail.GmailThread;
+      existingTask?: ExistingTask;
+    }[],
     context: string,
     config: Config
-  ): PlanOfAction[] {
+  ): AIParsedResponse[] {
     if (threads.length === 0) {
       return [];
     }
 
-    const threadsContent = threads.map((thread) => {
+    const threadsContent = threads.map(({ thread, existingTask }) => {
       const messages = thread.getMessages();
       const messageContent = this.formatMessagesForAI(messages);
-      return `
-        **EMAIL THREAD: ${thread.getFirstMessageSubject()}**
-        ---
-        ${messageContent}
-        ---
-      `;
+      const existingTaskInfo = existingTask
+        ? `\n        **EXISTING TASK:**\n        ---\n        Title: ${existingTask.title}\n        Notes: ${existingTask.notes}\n        Status: ${existingTask.status}\n        ---\n        `
+        : '';
+
+      return `\n        **EMAIL THREAD: ${thread.getFirstMessageSubject()}**\n        ---\n        ${messageContent}\n        ---\n        ${existingTaskInfo}\n      `;
     });
 
-    const systemPrompt = `
-      **SYSTEM PROMPT:**
-      You are an assistant helping me manage my email. Analyze the following email threads based on my personal context and generate a "Plan of Action" for each thread.
-      Return an array of "Plan of Action" objects, one for each thread.
-
-      **MY CONTEXT:**
-      ---
-      ${context}
-      ---
-
-      **YOUR TASK:**
-      Generate an array of "Plan of Action" objects.
-      If an email thread is actionable, create a task. Otherwise, do not include the "task" object for that thread.`;
+    const systemPrompt = `\n      **SYSTEM PROMPT:**\n      You are an assistant helping me manage my email. Analyze the following email threads based on my personal context and generate a "Plan of Action" for each thread.\n      Return an array of "Plan of Action" objects, one for each thread.\n\n      **MY CONTEXT:**\n      ---\n      ${context}\n      ---\n\n      **YOUR TASK:**\n      Generate an array of "Plan of Action" objects.\n      For each thread, decide on one of the following actions:\n\n      1.  **CREATE_TASK**: If the thread is actionable and there is no existing task.\n      2.  **UPDATE_TASK**: If there is an existing, incomplete task and the new messages contain significant updates.\n      3.  **REOPEN_AND_UPDATE_TASK**: If there is an existing, completed task and the new messages contain substantial new information that requires action.\n      4.  **DO_NOTHING**: If the thread is not actionable, or if the follow-up on a completed task is minor (e.g., "Thanks!").\n\n      If the action is 'DO_NOTHING', the "task" object should be null.\n      `;
 
     const responseSchema = {
       type: "ARRAY",
@@ -190,6 +188,15 @@ export class AIAnalyzer {
         description:
           "A structured plan of action for each email thread, including a task if applicable.",
         properties: {
+          action: {
+            type: "STRING",
+            enum: [
+              "CREATE_TASK",
+              "UPDATE_TASK",
+              "REOPEN_AND_UPDATE_TASK",
+              "DO_NOTHING",
+            ],
+          },
           task: {
             type: "OBJECT",
             nullable: true,
@@ -210,10 +217,7 @@ export class AIAnalyzer {
                 description:
                   "Detailed notes about the task, in proper Markdown format. Especially two line breaks between paragraphs.",
                 example:
-`Discuss project details with Jane because she has been waiting for a response since last week.
-
-[Discussion Link](https://example.com/discussion)
-`,
+`Discuss project details with Jane because she has been waiting for a response since last week.\n\n[Discussion Link](https://example.com/discussion)\n`,
                 nullable: false,
               },
               due_date: {
@@ -286,59 +290,5 @@ export class AIAnalyzer {
     });
 
     return this.callAI(systemPrompt, config, responseSchema, userParts);
-  }
-
-  public static shouldReopenTask(
-    task: ExistingTask,
-    messages: GoogleAppsScript.Gmail.GmailMessage[],
-    context: string,
-    config: Config
-  ): boolean {
-    if (messages.length === 0) {
-      return false;
-    }
-
-    const messageContent = this.formatMessagesForAI(messages);
-
-    const systemPrompt = `
-      **SYSTEM PROMPT:**
-      You are an assistant helping me manage my email. I have an existing task associated with this email thread.
-      Analyze the new messages in the context of the existing task and my personal context, and decide if the task should be reopened.
-      Return a JSON object with a single boolean property "reopen".
-
-      **MY CONTEXT:**
-      ---
-      ${context}
-      ---
-
-      **EXISTING TASK:**
-      ---
-      Title: ${task.title}
-      Notes: ${task.notes}
-      ---
-
-      **NEW MESSAGES:**
-      ---
-      ${messageContent}
-      ---
-
-      **YOUR TASK:**
-      Generate a JSON object with a single boolean property "reopen".
-      Set "reopen" to true if the new messages contain substantial new information that requires action.
-      Set "reopen" to false if the new messages are minor updates, acknowledgements, or don't require any action.`;
-
-    const responseSchema = {
-      type: "OBJECT",
-      properties: {
-        reopen: {
-          type: "BOOLEAN",
-        },
-      },
-    };
-
-    const userParts = [{ text: "Should I reopen the task based on the new messages?" }];
-
-    const decision = this.callAI(systemPrompt, config, responseSchema, userParts);
-    return decision.reopen;
   }
 }

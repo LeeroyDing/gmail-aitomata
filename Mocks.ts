@@ -11,8 +11,8 @@ export const Mocks = {
     max_threads: 50,
     default_task_list_name: 'My Tasks',
     task_service: 'Google Tasks',
-    todoist_api_key: '',
-    todoist_project_id: '',
+    todoist_api_key: 'test-todoist-api-key',
+    todoist_project_id: 'test-project-id',
   }),
   createMockGmailThread: (subject: string) => ({
     getFirstMessageSubject: () => subject,
@@ -287,6 +287,11 @@ export const Mocks = {
       selfLink: '',
       updated: '',
     },
+    ...overrides,
+  }),
+  createMockTodoistManager: (overrides: any) => ({
+    reopenTask: jest.fn(),
+    findTaskByThreadId: jest.fn(),
     ...overrides,
   }),
 };

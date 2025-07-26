@@ -70,6 +70,20 @@ gmail_thread_id: ${threadId}` };
   }
 
 
+  public reopenTask(taskId: string): boolean {
+    const taskListId = this.getTaskListId(Config.getConfig().default_task_list_name);
+    if (!taskListId) {
+      return false;
+    }
+    if (Tasks && Tasks.Tasks) {
+      const task = Tasks.Tasks.get(taskListId, taskId);
+      task.status = 'needsAction';
+      Tasks.Tasks.update(task, taskListId, taskId);
+      return true;
+    }
+    return false;
+  }
+
   /**
    * Finds the latest task activity timestamp for a given thread.
    *
