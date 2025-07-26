@@ -52,10 +52,6 @@ describe("TodoistManager", () => {
       due_date: "2025-12-31",
       priority: 4,
     };
-    const existingTask = {
-      id: "task-123",
-      description: "gmail_thread_id: " + thread.getId(),
-    };
     global.UrlFetchApp.fetch = jest.fn((url: string, options: any) => ({
       getResponseCode: () => 200,
       getContentText: () => {
