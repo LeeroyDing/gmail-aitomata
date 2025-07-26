@@ -25,15 +25,20 @@ describe("TodoistManager", () => {
     global.UrlFetchApp.fetch = jest.fn((url: string, options: any) => ({
       getResponseCode: () => 200,
       getContentText: () => {
-        if (url.includes("tasks")) {
-          const payload = JSON.parse(options.payload);
-          expect(payload.description).toContain("[View in Gmail](https://mail.google.com/mail/u/0/#inbox/thread-id)");
-          return JSON.stringify({ id: "12345" });
-        }
-        return JSON.stringify([]);
+        expect(url).toContain("https://api.todoist.com/api/v1/tasks");
+        const payload = JSON.parse(options.payload);
+        expect(payload.description).toContain(
+          "[View in Gmail](https://mail.google.com/mail/u/0/#inbox/thread-id)"
+        );
+        return JSON.stringify({ id: "12345" });
       },
     })) as any;
-    const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
+    const result = manager.upsertTask(
+      thread,
+      task,
+      mockConfig,
+      "https://mail.google.com/mail/u/0/#inbox/thread-id"
+    );
     expect(result).toBe(true);
   });
 
@@ -47,19 +52,28 @@ describe("TodoistManager", () => {
       due_date: "2025-12-31",
       priority: 4,
     };
-    const existingTask = { id: 'task-123', description: 'gmail_thread_id: ' + thread.getId() };
+    const existingTask = {
+      id: "task-123",
+      description: "gmail_thread_id: " + thread.getId(),
+    };
     global.UrlFetchApp.fetch = jest.fn((url: string, options: any) => ({
       getResponseCode: () => 200,
       getContentText: () => {
-        if (url.includes("tasks") && options.method === 'post') {
-          const payload = JSON.parse(options.payload);
-          expect(payload.description).toContain("[View in Gmail](https://mail.google.com/mail/u/0/#inbox/thread-id)");
-          return JSON.stringify({ id: "12345" });
-        }
-        return JSON.stringify([existingTask]);
+        expect(url).toContain("https://api.todoist.com/api/v1/tasks/task-123");
+        expect(options.method).toBe("post");
+        const payload = JSON.parse(options.payload);
+        expect(payload.description).toContain(
+          "[View in Gmail](https://mail.google.com/mail/u/0/#inbox/thread-id)"
+        );
+        return JSON.stringify({ id: "12345" });
       },
     })) as any;
-    const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
+    const result = manager.upsertTask(
+      thread,
+      task,
+      mockConfig,
+      "https://mail.google.com/mail/u/0/#inbox/thread-id"
+    );
     expect(result).toBe(true);
   });
 
@@ -85,9 +99,17 @@ describe("TodoistManager", () => {
   });
 
   it("should return the updated timestamp of the most recent task", () => {
-    const task1 = { updated_at: "2025-07-08T10:00:00Z", description: "gmail_thread_id: thread-123" };
-    const task2 = { updated_at: "2025-07-08T11:00:00Z", description: "gmail_thread_id: thread-123" };
-    jest.spyOn(manager as any, "findTaskByThreadId").mockReturnValue([task1, task2]);
+    const task1 = {
+      updated_at: "2025-07-08T10:00:00Z",
+      description: "gmail_thread_id: thread-123",
+    };
+    const task2 = {
+      updated_at: "2025-07-08T11:00:00Z",
+      description: "gmail_thread_id: thread-123",
+    };
+    jest
+      .spyOn(manager as any, "findTaskByThreadId")
+      .mockReturnValue([task1, task2]);
     const checkpoint = manager.findCheckpoint("thread-123", mockConfig);
     expect(checkpoint).toBe("2025-07-08T11:00:00Z");
   });
@@ -96,7 +118,7 @@ describe("TodoistManager", () => {
     global.UrlFetchApp.fetch = jest.fn(() => ({
       getResponseCode: () => 204,
     })) as any;
-    jest.spyOn(Config, 'getConfig').mockReturnValue(mockConfig);
+    jest.spyOn(Config, "getConfig").mockReturnValue(mockConfig);
     const result = manager.reopenTask("task-123");
     expect(result).toBe(true);
   });
