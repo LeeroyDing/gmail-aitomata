@@ -116,7 +116,7 @@ function setupTriggers() {
                 .timeBased()
                 .everyMinutes(config.processing_frequency_in_minutes)
                 .create();
-            Logger.log(`Created trigger ${trigger.getHandlerFunction()}: ${trigger.getUniqueId()}`);
+            console.log(`Created trigger ${trigger.getHandlerFunction()}: ${trigger.getUniqueId()}`);
 
             Utils.assert(ScriptApp.getProjectTriggers().length === 1,
                 `Unexpected trigger lists: ${ScriptApp.getProjectTriggers()
@@ -131,7 +131,7 @@ function stopAutoProcessing() {
     for (const trigger of allTriggers) {
         ScriptApp.deleteTrigger(trigger);
     }
-    Logger.log('All triggers have been deleted.');
+    console.log('All triggers have been deleted.');
 }
 
 

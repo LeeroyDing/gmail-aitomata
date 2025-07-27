@@ -129,19 +129,19 @@ export class AIAnalyzer {
           return JSON.parse(jsonResponse.candidates[0].content.parts[0].text);
         } else {
           const errorMessage = `AI API returned a 200 response, but no candidates were found. Response: ${responseBody}`;
-          Logger.log(errorMessage);
+          console.error(errorMessage);
           throw new Error(errorMessage);
         }
       } else {
         const errorMessage = `AI API request failed with code ${responseCode}: ${responseBody}`;
         console.error(errorMessage);
-        Logger.log(errorMessage);
+        console.error(errorMessage);
         throw new Error(errorMessage);
       }
     } catch (e) {
       const errorMessage = `Failed to call or parse AI API response: ${e}`;
       console.error(errorMessage);
-      Logger.log(errorMessage);
+      console.error(errorMessage);
       throw new Error(errorMessage);
     }
   }
