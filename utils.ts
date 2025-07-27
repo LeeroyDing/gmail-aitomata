@@ -25,10 +25,10 @@ export default class Utils {
         const startTime = new Date();
         try {
             const res = func();
-            Logger.log(`Finished ${taskName} successfully in ${new Date().getTime() - startTime.getTime()}ms`);
+            console.log(`Finished ${taskName} successfully in ${new Date().getTime() - startTime.getTime()}ms`);
             return res;
         } catch (e) {
-            Logger.log(
+            console.log(
                 `Finished ${taskName} failed in ${new Date().getTime() - startTime.getTime()}ms: ${e.name}\nMessage: ${e.message}`);
             throw e;
         }

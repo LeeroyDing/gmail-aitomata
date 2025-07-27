@@ -23,7 +23,7 @@ export class Stats {
         start_time: Date, processed_thread_count: number, processed_message_count: number) {
         const statsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(Stats.RECORD_SHEET_NAME);
         if (!statsSheet) {
-            Logger.log(`Could not find "${Stats.RECORD_SHEET_NAME}" sheet!`);
+            console.warn(`Could not find "${Stats.RECORD_SHEET_NAME}" sheet!`);
             return;
         }
         const duration = new Date().getTime() - start_time.getTime();
@@ -35,11 +35,11 @@ export class Stats {
         const record_sheet = spread_sheet.getSheetByName(Stats.RECORD_SHEET_NAME);
         const summary_sheet = spread_sheet.getSheetByName(Stats.SUMMARY_SHEET_NAME);
         if (!record_sheet) {
-            Logger.log(`Could not find "${Stats.RECORD_SHEET_NAME}" sheet!`);
+            console.warn(`Could not find "${Stats.RECORD_SHEET_NAME}" sheet!`);
             return;
         }
         if (!summary_sheet) {
-            Logger.log(`Could not find "${Stats.SUMMARY_SHEET_NAME}" sheet!`);
+            console.warn(`Could not find "${Stats.SUMMARY_SHEET_NAME}" sheet!`);
             return;
         }
 

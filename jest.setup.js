@@ -41,6 +41,12 @@ global.Logger = {
   log: jest.fn(),
 };
 
+global.console = {
+  log: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
+
 global.GmailApp = {
   getUserLabelByName: jest.fn(),
 };

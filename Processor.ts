@@ -29,7 +29,7 @@ export class Processor {
     const lock = LockService.getScriptLock();
     if (!lock.tryLock(10000)) {
       console.log('Could not obtain lock. Another instance is likely running.');
-      Logger.log('Could not obtain lock. Another instance is likely running.');
+      console.warn('Could not obtain lock. Another instance is likely running.');
       return;
     }
 
@@ -51,7 +51,7 @@ export class Processor {
       }
 
       const unprocessedThreads = unprocessedLabel.getThreads(0, config.max_threads);
-      Logger.log(`Found ${unprocessedThreads.length} unprocessed threads.`);
+      console.log(`Found ${unprocessedThreads.length} unprocessed threads.`);
       if (unprocessedThreads.length === 0) {
         return;
       }
@@ -73,7 +73,7 @@ export class Processor {
         const threadId = thread.getId();
 
         try {
-          Logger.log(`Executing plan for thread ${threadId}: ${plan.action}`);
+          console.log(`Executing plan for thread ${threadId}: ${plan.action}`);
 
           let markRead = false;
 
@@ -93,7 +93,7 @@ export class Processor {
                   tasksManager.upsertTask(thread, plan.task, config, thread.getPermalink());
                   markRead = true;
                 } else {
-                  Logger.log(`Could not find existing task to reopen for thread ${threadId}. Creating a new one instead.`);
+                  console.log(`Could not find existing task to reopen for thread ${threadId}. Creating a new one instead.`);
                   tasksManager.upsertTask(thread, plan.task, config, thread.getPermalink());
                   markRead = true;
                 }
@@ -114,7 +114,7 @@ export class Processor {
           }
         } catch (e) {
           console.error(`Failed to process thread ${threadId}: ${e}`);
-          Logger.log(`ERROR: Failed to process thread ${threadId}: ${e} - ${e.stack}`);
+          console.log(`ERROR: Failed to process thread ${threadId}: ${e} - ${e.stack}`);
           const errorLabel = GmailApp.getUserLabelByName(config.processing_failed_label);
           if (errorLabel) {
             thread.addLabel(errorLabel);

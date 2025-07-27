@@ -41,7 +41,7 @@ export class TodoistManager implements TasksManager {
       return true;
     } catch (e) {
       const errorMessage = (e instanceof Error) ? e.message : String(e);
-      Logger.log(`Todoist API error in upsertTask for thread ${threadId}. Error: ${errorMessage}`);
+      console.error(`Todoist API error in upsertTask for thread ${threadId}. Error: ${errorMessage}`);
       return false;
     }
   }
@@ -56,7 +56,7 @@ export class TodoistManager implements TasksManager {
 
   private findTaskByThreadId(threadId: string, config: Config): TodoistTask[] {
     if (!config.todoist_api_key) {
-      Logger.log('Todoist API key is not configured.');
+      console.warn('Todoist API key is not configured.');
       return [];
     }
     try {
@@ -68,21 +68,21 @@ export class TodoistManager implements TasksManager {
       );
     } catch (e) {
       const errorMessage = (e instanceof Error) ? e.message : String(e);
-      Logger.log(`Exception fetching tasks from Todoist: ${errorMessage}`);
+      console.error(`Exception fetching tasks from Todoist: ${errorMessage}`);
       return [];
     }
   }
 
   public reopenTask(taskId: string, config: Config): boolean {
     if (!config.todoist_api_key) {
-      Logger.log('Todoist API key is not configured.');
+      console.warn('Todoist API key is not configured.');
       return false;
     }
     try {
       return this.api.reopenTask(taskId, config);
     } catch (e) {
       const errorMessage = (e instanceof Error) ? e.message : String(e);
-      Logger.log(`Todoist API error in reopenTask for task ${taskId}. Error: ${errorMessage}`);
+      console.error(`Todoist API error in reopenTask for task ${taskId}. Error: ${errorMessage}`);
       return false;
     }
   }
