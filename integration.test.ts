@@ -178,4 +178,56 @@ describe('Integration Tests', () => {
     expect(global.Tasks!.Tasks!.insert).toHaveBeenCalledTimes(1);
     expect(global.Tasks!.Tasks!.update).toHaveBeenCalledTimes(3); // 1 for update, 2 for reopen
   });
+
+  it('should throw an error if the unprocessed label is not found', () => {
+    (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue(null);
+    expect(() => Processor.processAllUnprocessedThreads()).toThrow("Label 'unprocessed' not found. Please create it.");
+  });
+
+  it('should throw an error if the processed label is not found', () => {
+    (global.GmailApp.getUserLabelByName as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'unprocessed') {
+        return { getThreads: () => [] };
+      }
+      return null;
+    });
+    expect(() => Processor.processAllUnprocessedThreads()).toThrow("Label 'processed' not found. Please create it.");
+  });
+
+  it('should throw an error if the number of plans does not match the number of threads', () => {
+    const mockThread = Mocks.getMockThread({});
+    (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue({ getThreads: () => [mockThread] });
+    mockAIResponse([]);
+    expect(() => Processor.processAllUnprocessedThreads()).toThrow("Mismatch between number of threads (1) and plans received from AI (0).");
+  });
+
+  it('should apply the error label if processing a thread fails', () => {
+    const mockThread = Mocks.getMockThread({});
+    const errorLabel = { addLabel: jest.fn() };
+    (global.GmailApp.getUserLabelByName as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'unprocessed') {
+        return { getThreads: () => [mockThread], removeLabel: jest.fn() };
+      }
+      if (name === 'error') {
+        return errorLabel;
+      }
+      return { addLabel: jest.fn() };
+    });
+    mockAIResponse([
+      { action: 'CREATE_TASK', task: { title: 'New Task' } },
+    ]);
+    (global.Tasks!.Tasks!.insert as jest.Mock).mockImplementation(() => {
+      throw new Error('Test error');
+    });
+    Processor.processAllUnprocessedThreads();
+    expect(mockThread.addLabel).toHaveBeenCalledWith(errorLabel);
+  });
+
+  it('should do nothing if there are no unprocessed threads', () => {
+    (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue({ getThreads: () => [] });
+    Processor.processAllUnprocessedThreads();
+    expect(global.Tasks!.Tasks!.insert).not.toHaveBeenCalled();
+    expect(global.Tasks!.Tasks!.update).not.toHaveBeenCalled();
+  });
+
 });
