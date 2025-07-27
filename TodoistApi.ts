@@ -1,10 +1,11 @@
 
 import { Config } from "./Config";
+import { NewTaskPayload, TodoistTask } from "./types/todoist";
 
 export class TodoistApi {
   private readonly baseUrl = "https://api.todoist.com/rest/v2";
 
-  createTask(task: any, config: Config): any {
+  createTask(task: NewTaskPayload, config: Config): TodoistTask {
     const options = {
       method: "post" as const,
       contentType: "application/json",
@@ -24,7 +25,7 @@ export class TodoistApi {
     return JSON.parse(response.getContentText());
   }
 
-  getTasks(config: Config, filter?: string): any {
+  getTasks(config: Config, filter?: string): TodoistTask[] {
     const options = {
       method: "get" as const,
       contentType: "application/json",
@@ -47,7 +48,7 @@ export class TodoistApi {
     return JSON.parse(response.getContentText());
   }
 
-  updateTask(taskId: string, task: any, config: Config): void {
+  updateTask(taskId: string, task: Partial<NewTaskPayload>, config: Config): void {
     const options = {
       method: "post" as const,
       contentType: "application/json",

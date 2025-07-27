@@ -1,11 +1,15 @@
+
 import { Mocks } from './Mocks';
 import { Processor } from './Processor';
 import { AIAnalyzer } from './AIAnalyzer';
-import { TasksManagerFactory } from './TasksManagerFactory';
+
 import { Config } from './Config';
+import { GoogleTasksManager } from './GoogleTasksManager';
+import { TodoistManager } from './TodoistManager';
 
 jest.mock('./AIAnalyzer');
-jest.mock('./TasksManagerFactory');
+jest.mock('./GoogleTasksManager');
+jest.mock('./TodoistManager');
 jest.mock('./Config');
 
 global.Logger = {
@@ -22,6 +26,7 @@ global.LockService = {
 } as any;
 
 describe('Processor Tests', () => {
+  
   let mockTasksManager: any;
   let mockConfig: Partial<Config>;
 
@@ -29,13 +34,13 @@ describe('Processor Tests', () => {
     // Reset mocks before each test
     (AIAnalyzer.generatePlans as jest.Mock).mockClear();
     (Config.getConfig as jest.Mock).mockClear();
-    (TasksManagerFactory.getTasksManager as jest.Mock).mockClear();
 
     mockConfig = {
       unprocessed_label: 'unprocessed',
       processed_label: 'processed',
       processing_failed_label: 'error',
       max_threads: 50,
+      task_service: 'Google Tasks',
     };
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
@@ -44,7 +49,10 @@ describe('Processor Tests', () => {
       upsertTask: jest.fn().mockReturnValue(true),
       reopenTask: jest.fn().mockReturnValue(true),
     };
-    (TasksManagerFactory.getTasksManager as jest.Mock).mockReturnValue(mockTasksManager);
+
+    (GoogleTasksManager as jest.Mock).mockImplementation(() => mockTasksManager);
+    (TodoistManager as jest.Mock).mockImplementation(() => mockTasksManager);
+
 
     const unprocessedLabel = { getThreads: jest.fn().mockReturnValue([]) };
     const processedLabel = { getName: () => 'processed' };
@@ -105,7 +113,7 @@ describe('Processor Tests', () => {
 
     Processor.processAllUnprocessedThreads();
 
-    expect(mockTasksManager.reopenTask).toHaveBeenCalledWith('task-123');
+    expect(mockTasksManager.reopenTask).toHaveBeenCalledWith('task-123', expect.any(Object));
     expect(mockTasksManager.upsertTask).toHaveBeenCalledWith(mockThread, mockPlan.task, expect.any(Object), expect.any(String));
     expect(mockThread.markRead).toHaveBeenCalled();
   });

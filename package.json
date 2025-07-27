@@ -11,6 +11,7 @@
     "open": "clasp open",
     "test": "jest",
     "lint": "eslint . --ext .ts",
+    "typecheck": "tsc --noEmit",
     "lint:fix": "eslint . --ext .ts --fix"
   },
   "author": "Ranmocy",

@@ -2,6 +2,7 @@
 import { Config } from "./Config";
 import { Task, TasksManager } from "./TasksManager";
 import { TodoistApi } from "./TodoistApi";
+import { NewTaskPayload, TodoistTask } from "./types/todoist";
 
 export class TodoistManager implements TasksManager {
   private api: TodoistApi;
@@ -22,7 +23,7 @@ export class TodoistManager implements TasksManager {
     const content = task.title;
     const description = `${task.notes}\n\n[View in Gmail](${permalink})\n\n-----\n\ngmail_thread_id: ${threadId}`;
     
-    const taskPayload: any = {
+    const taskPayload: NewTaskPayload = {
       content,
       description,
       due_date: task.due_date,
@@ -45,7 +46,7 @@ export class TodoistManager implements TasksManager {
     }
   }
 
-  public findTask(threadId: string, config: Config): any | null {
+  public findTask(threadId: string, config: Config): TodoistTask | null {
     const tasks = this.findTaskByThreadId(threadId, config);
     if (tasks.length > 0) {
       return tasks[0];
@@ -53,7 +54,7 @@ export class TodoistManager implements TasksManager {
     return null;
   }
 
-  private findTaskByThreadId(threadId: string, config: Config): any[] {
+  private findTaskByThreadId(threadId: string, config: Config): TodoistTask[] {
     if (!config.todoist_api_key) {
       Logger.log('Todoist API key is not configured.');
       return [];

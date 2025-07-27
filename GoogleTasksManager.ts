@@ -70,8 +70,8 @@ gmail_thread_id: ${threadId}` };
   }
 
 
-  public reopenTask(taskId: string): boolean {
-    const taskListId = this.getTaskListId(Config.getConfig().default_task_list_name);
+  public reopenTask(taskId: string, config: Config): boolean {
+    const taskListId = this.getTaskListId(config.default_task_list_name);
     if (!taskListId) {
       return false;
     }

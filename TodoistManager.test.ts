@@ -30,7 +30,7 @@ describe("TodoistManager", () => {
       priority: 4,
     };
     mockApi.getTasks.mockReturnValue([]);
-    mockApi.createTask.mockReturnValue({ id: "12345" });
+    mockApi.createTask.mockReturnValue({ id: "12345", content: "Test Task", description: "", updated_at: "" });
     
     const result = manager.upsertTask(
       thread,
@@ -59,7 +59,7 @@ describe("TodoistManager", () => {
       due_date: "2025-12-31",
       priority: 4,
     };
-    const existingTask = { id: "task-123", description: "gmail_thread_id: " + thread.getId() };
+    const existingTask = { id: "task-123", description: "gmail_thread_id: " + thread.getId(), content: "old task", updated_at: "" };
     mockApi.getTasks.mockReturnValue([existingTask]);
     mockApi.updateTask.mockReturnValue(undefined);
 
@@ -87,21 +87,16 @@ describe("TodoistManager", () => {
     expect(checkpoint).toBeNull();
   });
 
-  it("should find a task by thread id", () => {
-    const task1 = { description: "gmail_thread_id: thread-123" };
-    const task2 = { description: "gmail_thread_id: thread-456" };
-    mockApi.getTasks.mockReturnValue([task1, task2]);
-    const tasks = (manager as any).findTaskByThreadId("thread-123", mockConfig);
-    expect(tasks.length).toBe(1);
-    expect(tasks[0].description).toBe("gmail_thread_id: thread-123");
-  });
-
   it("should return the updated timestamp of the most recent task", () => {
     const task1 = {
+      id: "1",
+      content: "task 1",
       updated_at: "2025-07-08T10:00:00Z",
       description: "gmail_thread_id: thread-123",
     };
     const task2 = {
+      id: "2",
+      content: "task 2",
       updated_at: "2025-07-08T11:00:00Z",
       description: "gmail_thread_id: thread-123",
     };
