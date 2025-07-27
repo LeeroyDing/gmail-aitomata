@@ -1,3 +1,4 @@
+
 /**
  * Copyright 2024 Google LLC
  *
@@ -16,10 +17,7 @@
 
 import { Config } from './Config';
 import { Stats } from './Stats';
-import { AIAnalyzer, PlanOfAction } from './AIAnalyzer';
-import { TasksManager } from './TasksManager';
-
-
+import { AIAnalyzer } from './AIAnalyzer';
 
 import { TasksManagerFactory } from './TasksManagerFactory';
 
@@ -39,7 +37,8 @@ export class Processor {
       const startTime = new Date();
       const config = Config.getConfig();
       const aiContext = AIAnalyzer.getContext();
-      const tasksManager = TasksManagerFactory.getTasksManager(config);
+      const tasksManagerFactory = new TasksManagerFactory();
+      const tasksManager = tasksManagerFactory.getTasksManager(config);
 
       const unprocessedLabel = GmailApp.getUserLabelByName(config.unprocessed_label);
       if (!unprocessedLabel) {
@@ -90,7 +89,7 @@ export class Processor {
               if (plan.task) {
                 const existingTask = tasksManager.findTask(threadId, config);
                 if (existingTask && existingTask.id) {
-                  tasksManager.reopenTask(existingTask.id);
+                  tasksManager.reopenTask(existingTask.id, config);
                   tasksManager.upsertTask(thread, plan.task, config, thread.getPermalink());
                   markRead = true;
                 } else {
@@ -129,5 +128,3 @@ export class Processor {
     }
   }
 }
-
-

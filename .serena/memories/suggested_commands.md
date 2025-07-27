@@ -4,3 +4,4 @@
 *   `yarn deploy`: Deploy the script.
 *   `yarn claspLogin`: Login to clasp.
 *   `yarn open`: Open the project in Google Apps Script editor.
+*   `yarn typecheck`: Run Typescript checks.

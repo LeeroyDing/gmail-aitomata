@@ -11,7 +11,7 @@ describe('GoogleTasksManager', () => {
     manager = new GoogleTasksManager();
     mockConfig = Mocks.createMockConfig();
     global.Tasks = Mocks.createMockTasks();
-    (global.Tasks.Tasks.get as jest.Mock) = jest.fn();
+    (global.Tasks!.Tasks!.get as jest.Mock) = jest.fn();
   });
 
   it('should create a new task with a permalink', () => {
@@ -19,7 +19,7 @@ describe('GoogleTasksManager', () => {
     const task = { title: 'Test Task', notes: 'Test Notes', due_date: '2025-12-31', priority: 1 };
     const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
     expect(result).toBe(true);
-    expect(global.Tasks?.Tasks?.insert).toHaveBeenCalledWith(
+    expect(global.Tasks!.Tasks!.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         notes: expect.stringContaining("Link to email: https://mail.google.com/mail/u/0/#inbox/thread-id"),
       }),
@@ -34,7 +34,7 @@ describe('GoogleTasksManager', () => {
     global.Tasks = Mocks.createMockTasks([existingTask]);
     const result = manager.upsertTask(thread, task, mockConfig, "https://mail.google.com/mail/u/0/#inbox/thread-id");
     expect(result).toBe(true);
-    expect(global.Tasks?.Tasks?.update).toHaveBeenCalledWith(
+    expect(global.Tasks!.Tasks!.update).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'task-123',
         notes: expect.stringContaining("Test Notes"),
@@ -94,12 +94,11 @@ describe('GoogleTasksManager', () => {
 
   it('should reopen a task', () => {
     const task = Mocks.createMockTask({ id: 'task-123', status: 'completed' });
-    (global.Tasks.Tasks.get as jest.Mock).mockReturnValue(task);
-    jest.spyOn(Config, 'getConfig').mockReturnValue(mockConfig);
+    (global.Tasks!.Tasks!.get as jest.Mock).mockReturnValue(task);
     jest.spyOn(manager as any, 'getTaskListId').mockReturnValue('tasklist-123');
-    const result = manager.reopenTask('task-123');
+    const result = manager.reopenTask('task-123', mockConfig);
     expect(result).toBe(true);
-    expect(global.Tasks?.Tasks?.update).toHaveBeenCalledWith(
+    expect(global.Tasks!.Tasks!.update).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'task-123', status: 'needsAction' }),
       'tasklist-123',
       'task-123'

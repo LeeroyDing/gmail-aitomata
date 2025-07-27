@@ -1,3 +1,4 @@
+
 import { Mocks } from "./Mocks";
 import { Processor } from "./Processor";
 import { Config } from "./Config";
@@ -55,8 +56,10 @@ describe('Integration Tests', () => {
 
   beforeEach(() => {
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
-    (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
-    (global.Tasks.Tasks.get as jest.Mock) = jest.fn();
+    if (global.Tasks && global.Tasks.Tasklists) {
+      (global.Tasks.Tasklists.list as jest.Mock).mockReturnValue({ items: [{ id: 'tasklist-1', title: 'My Tasks' }] });
+    }
+    (global.Tasks!.Tasks!.get as jest.Mock) = jest.fn();
     jest.clearAllMocks();
   });
 
@@ -71,14 +74,14 @@ describe('Integration Tests', () => {
   it('should create a task for a new actionable email', () => {
     const mockThread = Mocks.getMockThread({});
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue({ getThreads: () => [mockThread] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [] });
+    (global.Tasks!.Tasks!.list as jest.Mock).mockReturnValue({ items: [] });
     mockAIResponse([
       { action: 'CREATE_TASK', task: { title: 'New Task' } },
     ]);
 
     Processor.processAllUnprocessedThreads();
 
-    expect(global.Tasks.Tasks.insert).toHaveBeenCalledWith(expect.objectContaining({ title: 'New Task' }), 'tasklist-1');
+    expect(global.Tasks!.Tasks!.insert).toHaveBeenCalledWith(expect.objectContaining({ title: 'New Task' }), 'tasklist-1');
     expect(mockThread.markRead).toHaveBeenCalled();
   });
 
@@ -86,14 +89,14 @@ describe('Integration Tests', () => {
     const mockThread = Mocks.getMockThread({ getId: () => 'thread-incomplete' });
     const existingTask = Mocks.createMockTask({ id: 'task-incomplete', notes: 'gmail_thread_id: thread-incomplete', status: 'needsAction' });
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue({ getThreads: () => [mockThread] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [existingTask] });
+    (global.Tasks!.Tasks!.list as jest.Mock).mockReturnValue({ items: [existingTask] });
     mockAIResponse([
       { action: 'UPDATE_TASK', task: { title: 'Updated Title' } },
     ]);
 
     Processor.processAllUnprocessedThreads();
 
-    expect(global.Tasks.Tasks.update).toHaveBeenCalledWith(
+    expect(global.Tasks!.Tasks!.update).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'task-incomplete', title: 'Updated Title' }),
       'tasklist-1',
       'task-incomplete'
@@ -105,8 +108,8 @@ describe('Integration Tests', () => {
     const mockThread = Mocks.getMockThread({ getId: () => 'thread-completed' });
     const existingTask = Mocks.createMockTask({ id: 'task-completed', notes: 'gmail_thread_id: thread-completed', status: 'completed' });
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue({ getThreads: () => [mockThread] });
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [existingTask] });
-    (global.Tasks.Tasks.get as jest.Mock).mockReturnValue(existingTask);
+    (global.Tasks!.Tasks!.list as jest.Mock).mockReturnValue({ items: [existingTask] });
+    (global.Tasks!.Tasks!.get as jest.Mock).mockReturnValue(existingTask);
     mockAIResponse([
       { action: 'REOPEN_AND_UPDATE_TASK', task: { title: 'Reopened Task' } },
     ]);
@@ -114,14 +117,14 @@ describe('Integration Tests', () => {
     Processor.processAllUnprocessedThreads();
 
     // First update is to reopen (status change)
-    expect(global.Tasks.Tasks.update).toHaveBeenCalledWith(
+    expect(global.Tasks!.Tasks!.update).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'task-completed', status: 'needsAction' }),
       'tasklist-1',
       'task-completed'
     );
     
     // Second update is for the content
-    expect(global.Tasks.Tasks.update).toHaveBeenCalledWith(
+    expect(global.Tasks!.Tasks!.update).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'task-completed', title: 'Reopened Task' }),
       'tasklist-1',
       'task-completed'
@@ -138,8 +141,8 @@ describe('Integration Tests', () => {
 
     Processor.processAllUnprocessedThreads();
 
-    expect(global.Tasks.Tasks.insert).not.toHaveBeenCalled();
-    expect(global.Tasks.Tasks.update).not.toHaveBeenCalled();
+    expect(global.Tasks!.Tasks!.insert).not.toHaveBeenCalled();
+    expect(global.Tasks!.Tasks!.update).not.toHaveBeenCalled();
     expect(mockThread.markRead).not.toHaveBeenCalled();
     expect(mockThread.removeLabel).toHaveBeenCalled(); // Should still be processed
   });
@@ -156,8 +159,8 @@ describe('Integration Tests', () => {
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue({ getThreads: () => [thread1, thread2, thread3, thread4] });
     
     // Mock findTask logic
-    (global.Tasks.Tasks.list as jest.Mock).mockReturnValue({ items: [task2, task3] });
-    (global.Tasks.Tasks.get as jest.Mock).mockReturnValue(task3);
+    (global.Tasks!.Tasks!.list as jest.Mock).mockReturnValue({ items: [task2, task3] });
+    (global.Tasks!.Tasks!.get as jest.Mock).mockReturnValue(task3);
 
     mockAIResponse([
       { action: 'CREATE_TASK', task: { title: 'New' } },
@@ -168,11 +171,11 @@ describe('Integration Tests', () => {
 
     Processor.processAllUnprocessedThreads();
 
-    expect(global.Tasks.Tasks.insert).toHaveBeenCalledWith(expect.objectContaining({ title: 'New' }), 'tasklist-1');
-    expect(global.Tasks.Tasks.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-2', title: 'Updated' }), 'tasklist-1', 'task-2');
-    expect(global.Tasks.Tasks.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-3', status: 'needsAction' }), 'tasklist-1', 'task-3');
-    expect(global.Tasks.Tasks.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-3', title: 'Reopened' }), 'tasklist-1', 'task-3');
-    expect(global.Tasks.Tasks.insert).toHaveBeenCalledTimes(1);
-    expect(global.Tasks.Tasks.update).toHaveBeenCalledTimes(3); // 1 for update, 2 for reopen
+    expect(global.Tasks!.Tasks!.insert).toHaveBeenCalledWith(expect.objectContaining({ title: 'New' }), 'tasklist-1');
+    expect(global.Tasks!.Tasks!.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-2', title: 'Updated' }), 'tasklist-1', 'task-2');
+    expect(global.Tasks!.Tasks!.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-3', status: 'needsAction' }), 'tasklist-1', 'task-3');
+    expect(global.Tasks!.Tasks!.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-3', title: 'Reopened' }), 'tasklist-1', 'task-3');
+    expect(global.Tasks!.Tasks!.insert).toHaveBeenCalledTimes(1);
+    expect(global.Tasks!.Tasks!.update).toHaveBeenCalledTimes(3); // 1 for update, 2 for reopen
   });
 });

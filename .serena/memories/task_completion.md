@@ -4,6 +4,7 @@ When a task is completed, the following should be done:
     ```bash
     yarn lint
     yarn test
+    yarn typecheck
     ```
 2.  **Deploy the changes:**
     ```bash
