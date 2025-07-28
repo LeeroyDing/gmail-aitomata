@@ -40,12 +40,18 @@ describe("TodoistApi", () => {
 
   it("should get completed tasks", () => {
     const completedTasks = { items: [{ id: "1" }, { id: "2" }] };
+    const mockDate = new Date("2023-01-31T12:00:00.000Z");
+    const expectedSince = "2023-01-01T12:00:00.000Z"; // 30 days before
+    jest.spyOn(global, "Date").mockImplementation(() => mockDate);
+
     global.UrlFetchApp.fetch = jest.fn((url: string, options: any) => {
-      expect(url).toContain("https://api.todoist.com/api/v1/tasks/completed/by_completion_date");
+      const expectedUrl = `https://api.todoist.com/api/v1/tasks/completed/by_completion_date?since=${expectedSince}&until=${mockDate.toISOString()}`;
+      expect(url).toBe(expectedUrl);
       return Mocks.getMockUrlFetchResponse(200, JSON.stringify(completedTasks));
     }) as any;
     const result = api.getCompletedTasks(mockConfig);
     expect(result).toEqual(completedTasks.items);
+    jest.restoreAllMocks();
   });
 
   it("should update a task", () => {
