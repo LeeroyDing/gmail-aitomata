@@ -10,12 +10,17 @@
     "deploy": "clasp push",
     "open": "clasp open",
     "test": "jest",
+    "preinstall": "npx only-allow yarn",
     "lint": "eslint . --ext .ts",
     "typecheck": "tsc --noEmit",
     "lint:fix": "eslint . --ext .ts --fix"
   },
   "author": "Ranmocy",
   "license": "APACHE-2.0",
+  "engines": {
+    "yarn": ">=1.22.0",
+    "npm": "please-use-yarn"
+  },
   "devDependencies": {
     "@google/clasp": "^2.3.0",
     "@types/google-apps-script": "^1.0.45",

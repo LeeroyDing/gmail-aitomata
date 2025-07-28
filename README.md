@@ -44,6 +44,8 @@ You can upgrade to the latest version by either forking the spreadsheet again or
 
 ## Dev Setup
 
+**Note:** This project uses Yarn as its official package manager. Please ensure you have Yarn installed and use it for all dependency management.
+
 1.  Install Node.js and Yarn.
 2.  Clone the repository and install dependencies:
     ```bash
