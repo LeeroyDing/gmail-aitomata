@@ -294,4 +294,8 @@ export const Mocks = {
     findTaskByThreadId: jest.fn(),
     ...overrides,
   }),
+  createMockUtilities: () => ({
+    getUuid: jest.fn(() => Mocks.mockUuid),
+  }),
+  mockUuid: "mock-uuid",
 };

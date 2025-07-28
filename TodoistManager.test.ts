@@ -111,4 +111,12 @@ describe("TodoistManager", () => {
     expect(mockApi.reopenTask).toHaveBeenCalledWith("task-123", mockConfig);
     expect(result).toBe(true);
   });
+
+  it("should get completed tasks", () => {
+    const completedTasks = [{ id: "1", content: "completed task 1", description: "", updated_at: "" }];
+    mockApi.getCompletedTasks.mockReturnValue(completedTasks);
+    const result = manager.getCompletedTasks(mockConfig);
+    expect(mockApi.getCompletedTasks).toHaveBeenCalledWith(mockConfig);
+    expect(result).toEqual(completedTasks);
+  });
 });

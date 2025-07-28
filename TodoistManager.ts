@@ -87,6 +87,20 @@ export class TodoistManager implements TasksManager {
     }
   }
 
+  public getCompletedTasks(config: Config): TodoistTask[] {
+    if (!config.todoist_api_key) {
+      console.warn('Todoist API key is not configured.');
+      return [];
+    }
+    try {
+      return this.api.getCompletedTasks(config);
+    } catch (e) {
+      const errorMessage = (e instanceof Error) ? e.message : String(e);
+      console.error(`Exception fetching completed tasks from Todoist: ${errorMessage}`);
+      return [];
+    }
+  }
+
   public findCheckpoint(threadId: string, config: Config): string | null {
     const allTasks = this.findTaskByThreadId(threadId, config);
 
