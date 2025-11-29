@@ -10,7 +10,7 @@ Gmail Automata turns your chaotic inbox into a structured, prioritized task list
 2.  **AI analyzes them** every 5 minutes.
 3.  **Tasks appear** in your Task Manager (Todoist/Google Tasks) with a summary, priority, and due date.
 4.  **You process the tasks** (complete, reschedule, rename).
-5.  **AI learns from you** (Coming Soon: The system watches your edits to get smarter).
+5.  **AI learns from you** The system watches your edits (renames, due date changes, deletions) to get smarter over time.
 
 ## The Workflow (How to use this)
 
@@ -45,6 +45,9 @@ If the AI *fails* to create a task for an important email:
 2.  **Gmail Setup**:
     *   Create a label called `unprocessed`.
     *   Create a filter to apply `unprocessed` to incoming emails (skip the inbox if you're brave!).
+3.  **Automatic Sheets**:
+    *   **`Task_Tracker`**: Created automatically to track active tasks for feedback analysis. **Do not edit manually.**
+    *   **`AI_Learnings`**: Created automatically to store rules generated from your corrections. You can review and edit these rules to fine-tune the AI.
 
 ## Development
 
