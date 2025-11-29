@@ -286,6 +286,7 @@ export const Mocks = {
       list: jest.fn(() => ({ items: tasks })),
       insert: jest.fn(() => ({ id: 'new-task-id' })),
       update: jest.fn(() => ({ id: 'updated-task-id' })),
+      get: jest.fn(),
     },
   }),
 

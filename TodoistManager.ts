@@ -74,6 +74,17 @@ export class TodoistManager implements TasksManager {
     return null;
   }
 
+  public findCompletedTask(threadId: string, config: Config): TodoistTask | null {
+    const tasks = this.getCompletedTasks(config);
+    const sanitizedThreadId = threadId.replace(/"/g, '');
+    const marker = `${GMAIL_THREAD_ID_MARKER}${sanitizedThreadId}`;
+
+    // Todoist getCompletedTasks returns all completed tasks (limit might apply).
+    // We filter locally.
+    const found = tasks.find(t => t.content.includes(marker) || t.description?.includes(marker));
+    return found || null;
+  }
+
   private findTaskByThreadId(threadId: string, config: Config): TodoistTask[] {
     if (!config.todoist_api_key) {
       console.warn('Todoist API key is not configured.');

@@ -33,6 +33,7 @@ const mockTasksManager: TasksManager = {
     upsertTask: jest.fn(),
     findCheckpoint: jest.fn(),
     findTask: jest.fn(),
+    findCompletedTask: jest.fn(),
     reopenTask: jest.fn(),
 };
 
@@ -177,6 +178,51 @@ describe('FeedbackManager', () => {
 
             // Verify row deleted
             expect(mockSheet.deleteRow).toHaveBeenCalledWith(2); // Row 2 (1-based)
+        });
+
+        it('should handle completed tasks (stop tracking, no learning)', () => {
+            mockRange.getDisplayValues.mockReturnValue([
+                ['ThreadID', 'TaskID', 'OriginalTitle', 'OriginalDueDate', 'OriginalPriority', 'CreatedAt'],
+                ['thread-1', 'task-1', 'Original Title', '2023-01-01', '1', '2023-01-01T00:00:00Z'],
+            ]);
+
+            // Task not found in active
+            (mockTasksManager.findTask as jest.Mock).mockReturnValue(null);
+            // Task found in completed
+            (mockTasksManager.findCompletedTask as jest.Mock).mockReturnValue({ id: 'task-1', status: 'completed' });
+
+            FeedbackManager.analyzeFeedback(mockTasksManager, config);
+
+            // Verify AI NOT called
+            expect(AIAnalyzer.generateLearning).not.toHaveBeenCalled();
+
+            // Verify row deleted (stop tracking)
+            expect(mockSheet.deleteRow).toHaveBeenCalledWith(2);
+        });
+
+        it('should handle null learning from AI (stop tracking, no recording)', () => {
+            mockRange.getDisplayValues.mockReturnValue([
+                ['ThreadID', 'TaskID', 'OriginalTitle', 'OriginalDueDate', 'OriginalPriority', 'CreatedAt'],
+                ['thread-1', 'task-1', 'Original Title', '2023-01-01', '1', '2023-01-01T00:00:00Z'],
+            ]);
+
+            // Task not found (deleted)
+            (mockTasksManager.findTask as jest.Mock).mockReturnValue(null);
+            (mockTasksManager.findCompletedTask as jest.Mock).mockReturnValue(null);
+
+            // Mock AI returning null
+            (AIAnalyzer.generateLearning as jest.Mock).mockReturnValue(null);
+
+            FeedbackManager.analyzeFeedback(mockTasksManager, config);
+
+            // Verify AI called
+            expect(AIAnalyzer.generateLearning).toHaveBeenCalled();
+
+            // Verify learning NOT recorded
+            expect(mockSheet.appendRow).not.toHaveBeenCalled();
+
+            // Verify row deleted
+            expect(mockSheet.deleteRow).toHaveBeenCalledWith(2);
         });
 
         it('should ignore tasks with no changes', () => {

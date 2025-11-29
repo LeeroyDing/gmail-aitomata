@@ -128,7 +128,10 @@ export class Processor {
               break;
             case 'REOPEN_AND_UPDATE_TASK':
               if (plan.task) {
-                const existingTask = tasksManager.findTask(threadId, config);
+                let existingTask = tasksManager.findTask(threadId, config);
+                if (!existingTask) {
+                  existingTask = tasksManager.findCompletedTask(threadId, config);
+                }
                 if (existingTask && existingTask.id) {
                   tasksManager.reopenTask(existingTask.id, config);
                   const taskId = tasksManager.upsertTask(thread, plan.task, config, thread.getPermalink());

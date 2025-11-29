@@ -69,7 +69,17 @@ export class FeedbackManager {
                 const currentTask = tasksManager.findTask(threadId, config);
 
                 if (!currentTask) {
-                    // Task deleted or archived. Treat as negative feedback.
+                    // Task not found in active tasks.
+                    // Check if it was completed.
+                    const completedTask = tasksManager.findCompletedTask(threadId, config);
+
+                    if (completedTask) {
+                        console.log(`Task ${taskId} is completed. Stopping tracking.`);
+                        rowsToDelete.push(i + 2);
+                        continue;
+                    }
+
+                    // Task deleted or archived (and not completed). Treat as negative feedback.
                     console.log(`Task ${taskId} not found (deleted). Generating learning...`);
 
                     const diff = {

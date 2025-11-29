@@ -13,5 +13,6 @@ export interface TasksManager {
   upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config, permalink: string): string | null;
   findCheckpoint(threadId: string, config: Config): string | null;
   findTask(threadId: string, config: Config): any | null;
+  findCompletedTask(threadId: string, config: Config): any | null;
   reopenTask(taskId: string, config: Config): boolean;
 }

@@ -45,13 +45,25 @@ gmail_thread_id: ${threadId}`
     return this.findTaskByThreadId(taskListId, threadId);
   }
 
-  private findTaskByThreadId(taskListId: string, threadId: string): GoogleAppsScript.Tasks.Schema.Task | null {
+  public findCompletedTask(threadId: string, config: Config): any | null {
+    const taskListId = this.getTaskListId(config.default_task_list_name);
+    if (!taskListId) {
+      return null;
+    }
+    return this.findTaskByThreadId(taskListId, threadId, true);
+  }
+
+  private findTaskByThreadId(taskListId: string, threadId: string, completedOnly: boolean = false): GoogleAppsScript.Tasks.Schema.Task | null {
     if (Tasks && Tasks.Tasks) {
-      const tasks = Tasks.Tasks.list(taskListId);
+      const tasks = Tasks.Tasks.list(taskListId, { showCompleted: true, showHidden: true });
       if (tasks.items) {
         for (const task of tasks.items) {
           if (task.notes && task.notes.includes(`gmail_thread_id: ${threadId}`)) {
-            return task;
+            if (completedOnly) {
+              if (task.status === 'completed') return task;
+            } else {
+              if (task.status !== 'completed') return task;
+            }
           }
         }
       }
@@ -72,7 +84,6 @@ gmail_thread_id: ${threadId}`
     }
     return null;
   }
-
 
   public reopenTask(taskId: string, config: Config): boolean {
     const taskListId = this.getTaskListId(config.default_task_list_name);
