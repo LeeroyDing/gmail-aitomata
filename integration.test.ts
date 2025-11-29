@@ -31,6 +31,15 @@ global.SpreadsheetApp = {
       }
       return null;
     }),
+    insertSheet: jest.fn(() => ({
+      appendRow: jest.fn(),
+      getDataRange: jest.fn(() => ({
+        getDisplayValues: jest.fn(() => []),
+      })),
+      getRange: jest.fn(() => ({
+        setValue: jest.fn(),
+      })),
+    })),
   })),
 } as any;
 global.LockService = {
@@ -52,6 +61,7 @@ describe('Integration Tests', () => {
     processing_failed_label: 'error',
     default_task_list_name: 'My Tasks',
     task_service: 'Google Tasks',
+    force_task_label: 'aitomata/force',
   } as Config;
 
   beforeEach(() => {
@@ -122,7 +132,7 @@ describe('Integration Tests', () => {
       'tasklist-1',
       'task-completed'
     );
-    
+
     // Second update is for the content
     expect(global.Tasks!.Tasks!.update).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'task-completed', title: 'Reopened Task' }),
@@ -157,7 +167,7 @@ describe('Integration Tests', () => {
     const task3 = Mocks.createMockTask({ id: 'task-3', notes: 'gmail_thread_id: batch-3', status: 'completed' });
 
     (global.GmailApp.getUserLabelByName as jest.Mock).mockReturnValue({ getThreads: () => [thread1, thread2, thread3, thread4] });
-    
+
     // Mock findTask logic
     (global.Tasks!.Tasks!.list as jest.Mock).mockReturnValue({ items: [task2, task3] });
     (global.Tasks!.Tasks!.get as jest.Mock).mockReturnValue(task3);
@@ -210,6 +220,9 @@ describe('Integration Tests', () => {
       }
       if (name === 'error') {
         return errorLabel;
+      }
+      if (name === 'aitomata/force') {
+        return { getThreads: jest.fn().mockReturnValue([]) };
       }
       return { addLabel: jest.fn() };
     });

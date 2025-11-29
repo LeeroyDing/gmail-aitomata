@@ -31,7 +31,7 @@ describe("TodoistManager", () => {
     };
     mockApi.getTasks.mockReturnValue([]);
     mockApi.createTask.mockReturnValue({ id: "12345", content: "Test Task", description: "", updated_at: "" });
-    
+
     const result = manager.upsertTask(
       thread,
       task,
@@ -46,7 +46,7 @@ describe("TodoistManager", () => {
       }),
       mockConfig
     );
-    expect(result).toBe(true);
+    expect(result).toBe("12345");
   });
 
   it("should update an existing task with a permalink", () => {
@@ -78,7 +78,7 @@ describe("TodoistManager", () => {
       }),
       mockConfig
     );
-    expect(result).toBe(true);
+    expect(result).toBe("task-123");
   });
 
   it("should return null when no tasks exist", () => {

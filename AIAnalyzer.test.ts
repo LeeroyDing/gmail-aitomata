@@ -18,6 +18,9 @@ import './jest.setup.js';
 import { Mocks } from './Mocks';
 import { AIAnalyzer, AIParsedResponse } from './AIAnalyzer';
 import { Config } from './Config';
+import { FeedbackManager } from './FeedbackManager';
+
+jest.mock('./FeedbackManager');
 
 jest.mock('./Config');
 
@@ -46,7 +49,8 @@ describe('AIAnalyzer Tests', () => {
     global.UrlFetchApp = {
       fetch: jest.fn(),
     } as any;
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => { });
+    (FeedbackManager.getLearnings as jest.Mock).mockReturnValue([]);
   });
 
   it('should read context from the AI_Context sheet', () => {
@@ -94,7 +98,7 @@ describe('AIAnalyzer Tests', () => {
       const payload = JSON.parse(params.payload as string);
       expect(payload.system_instruction.parts[0].text).toContain('Test Context');
       expect(payload.contents[0].parts[0].text).toContain('Test Subject');
-      
+
       return Mocks.getMockUrlFetchResponse(200, JSON.stringify({
         candidates: [{ content: { parts: [{ text: JSON.stringify([mockPlan]) }] } }],
       }));

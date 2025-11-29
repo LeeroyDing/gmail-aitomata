@@ -3,11 +3,11 @@ import { Config } from './Config';
 import { Task, TasksManager } from './TasksManager';
 
 export class GoogleTasksManager implements TasksManager {
-  public upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config, permalink: string): boolean {
+  public upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config, permalink: string): string | null {
     const threadId = thread.getId();
     const taskListId = this.getTaskListId(config.default_task_list_name);
     if (!taskListId) {
-      return false;
+      return null;
     }
 
     const existingTask = this.findTaskByThreadId(taskListId, threadId);
@@ -17,20 +17,24 @@ export class GoogleTasksManager implements TasksManager {
       // Update existing task
       const updatedTask = { ...existingTask, ...taskWithoutPriority };
       if (Tasks && Tasks.Tasks) {
-        Tasks.Tasks.update(updatedTask, taskListId, existingTask.id);
+        const updated = Tasks.Tasks.update(updatedTask, taskListId, existingTask.id);
+        return updated.id ?? null;
       }
     } else {
       // Create new task
-      const newTask = { ...taskWithoutPriority, notes: `${task.notes}
+      const newTask = {
+        ...taskWithoutPriority, notes: `${task.notes}
 
 Link to email: ${permalink}
 
-gmail_thread_id: ${threadId}` };
+gmail_thread_id: ${threadId}`
+      };
       if (Tasks && Tasks.Tasks) {
-        Tasks.Tasks.insert(newTask, taskListId);
+        const created = Tasks.Tasks.insert(newTask, taskListId);
+        return created.id ?? null;
       }
     }
-    return true;
+    return null;
   }
 
   public findTask(threadId: string, config: Config): any | null {

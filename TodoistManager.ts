@@ -27,7 +27,7 @@ export class TodoistManager implements TasksManager {
     task: Task,
     config: Config,
     permalink: string
-  ): boolean {
+  ): string | null {
     const threadId = thread.getId();
     const existingTasks = this.findTaskByThreadId(threadId, config);
 
@@ -37,7 +37,7 @@ export class TodoistManager implements TasksManager {
 [View in Gmail](${permalink})
 
 -----\n\n${GMAIL_THREAD_ID_MARKER}${threadId}`;
-    
+
     const taskPayload: NewTaskPayload = {
       content,
       description,
@@ -52,11 +52,12 @@ export class TodoistManager implements TasksManager {
         }
         const existingTask = existingTasks[0];
         this.api.updateTask(existingTask.id, taskPayload, config);
+        return existingTask.id;
       } else {
         taskPayload.project_id = config.todoist_project_id;
-        this.api.createTask(taskPayload, config);
+        const created = this.api.createTask(taskPayload, config);
+        return created.id;
       }
-      return true;
     } catch (e) {
       const errorMessage = (e instanceof Error) ? e.message : String(e);
       console.error(`Todoist API error in upsertTask for thread ${threadId}. Error: ${errorMessage}`);
@@ -79,7 +80,7 @@ export class TodoistManager implements TasksManager {
       return [];
     }
     try {
-      const sanitizedThreadId = threadId.replace(/"/g, ''); 
+      const sanitizedThreadId = threadId.replace(/"/g, '');
       const filter = `search: "${GMAIL_THREAD_ID_MARKER}${sanitizedThreadId}"`;
       const tasks = this.api.getTasks(config, filter);
       return tasks;
@@ -104,19 +105,7 @@ export class TodoistManager implements TasksManager {
     }
   }
 
-  public getCompletedTasks(config: Config): TodoistTask[] {
-    if (!config.todoist_api_key) {
-      console.warn('Todoist API key is not configured.');
-      return [];
-    }
-    try {
-      return this.api.getCompletedTasks(config);
-    } catch (e) {
-      const errorMessage = (e instanceof Error) ? e.message : String(e);
-      console.error(`Exception fetching completed tasks from Todoist: ${errorMessage}`);
-      throw e;
-    }
-  }
+
 
   public getCompletedTasks(config: Config): TodoistTask[] {
     if (!config.todoist_api_key) {

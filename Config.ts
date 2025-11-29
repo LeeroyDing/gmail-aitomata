@@ -20,6 +20,7 @@ export interface MutableConfig {
     unprocessed_label: string;
     processed_label: string;
     processing_failed_label: string;
+    force_task_label: string;
     processing_frequency_in_minutes: number;
     hour_of_day_to_run_sanity_checking: number;
     go_link: string;
@@ -36,6 +37,7 @@ export class Config implements Readonly<MutableConfig> {
     public readonly unprocessed_label: string;
     public readonly processed_label: string;
     public readonly processing_failed_label: string;
+    public readonly force_task_label: string;
     public readonly processing_frequency_in_minutes: number;
     public readonly hour_of_day_to_run_sanity_checking: number;
     public readonly go_link: string;
@@ -57,6 +59,7 @@ export class Config implements Readonly<MutableConfig> {
             unprocessed_label: "unprocessed",
             processed_label: "processed",
             processing_failed_label: "error",
+            force_task_label: "aitomata/force",
             processing_frequency_in_minutes: 5,
             hour_of_day_to_run_sanity_checking: 0,
             go_link: "",
@@ -109,6 +112,7 @@ export class Config implements Readonly<MutableConfig> {
                 case "unprocessed_label":
                 case "processed_label":
                 case "processing_failed_label":
+                case "force_task_label":
                 case "go_link":
                 case "default_task_list_name":
                 case "GEMINI_API_KEY":
