@@ -106,4 +106,42 @@ describe('GoogleTasksManager', () => {
       'task-123'
     );
   });
+
+  it('should find a task and return TaskDetails', () => {
+    const task = Mocks.createMockTask({
+      id: 'task-123',
+      title: 'Test Task',
+      notes: 'gmail_thread_id: thread-123',
+      status: 'needsAction',
+      due: '2023-01-01T00:00:00.000Z'
+    });
+    global.Tasks = Mocks.createMockTasks([task]);
+    const result = manager.findTask('thread-123', mockConfig);
+    expect(result).toEqual({
+      id: 'task-123',
+      title: 'Test Task',
+      notes: 'gmail_thread_id: thread-123',
+      status: 'needsAction',
+      due_date: '2023-01-01'
+    });
+  });
+
+  it('should find a completed task and return TaskDetails', () => {
+    const task = Mocks.createMockTask({
+      id: 'task-123',
+      title: 'Test Task',
+      notes: 'gmail_thread_id: thread-123',
+      status: 'completed',
+      due: '2023-01-01T00:00:00.000Z'
+    });
+    global.Tasks = Mocks.createMockTasks([task]);
+    const result = manager.findCompletedTask('thread-123', mockConfig);
+    expect(result).toEqual({
+      id: 'task-123',
+      title: 'Test Task',
+      notes: 'gmail_thread_id: thread-123',
+      status: 'completed',
+      due_date: '2023-01-01'
+    });
+  });
 });

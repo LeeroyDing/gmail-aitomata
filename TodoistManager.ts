@@ -1,6 +1,6 @@
 
 import { Config } from "./Config";
-import { Task, TasksManager } from "./TasksManager";
+import { Task, TasksManager, TaskDetails } from "./TasksManager";
 import { TodoistApi } from "./TodoistApi";
 import { NewTaskPayload, TodoistTask } from "./types/todoist";
 
@@ -65,16 +65,15 @@ export class TodoistManager implements TasksManager {
     }
   }
 
-
-  public findTask(threadId: string, config: Config): TodoistTask | null {
+  public findTask(threadId: string, config: Config): TaskDetails | null {
     const tasks = this.findTaskByThreadId(threadId, config);
     if (tasks.length > 0) {
-      return tasks[0];
+      return this.normalizeTask(tasks[0], 'needsAction');
     }
     return null;
   }
 
-  public findCompletedTask(threadId: string, config: Config): TodoistTask | null {
+  public findCompletedTask(threadId: string, config: Config): TaskDetails | null {
     const tasks = this.getCompletedTasks(config);
     const sanitizedThreadId = threadId.replace(/"/g, '');
     const marker = `${GMAIL_THREAD_ID_MARKER}${sanitizedThreadId}`;
@@ -82,7 +81,18 @@ export class TodoistManager implements TasksManager {
     // Todoist getCompletedTasks returns all completed tasks (limit might apply).
     // We filter locally.
     const found = tasks.find(t => t.content.includes(marker) || t.description?.includes(marker));
-    return found || null;
+    return found ? this.normalizeTask(found, 'completed') : null;
+  }
+
+  private normalizeTask(task: TodoistTask, status: 'needsAction' | 'completed'): TaskDetails {
+    return {
+      id: task.id,
+      title: task.content,
+      notes: task.description || '',
+      due_date: task.due ? task.due.date : undefined,
+      priority: task.priority ? String(task.priority) : undefined,
+      status: status
+    };
   }
 
   private findTaskByThreadId(threadId: string, config: Config): TodoistTask[] {
@@ -115,8 +125,6 @@ export class TodoistManager implements TasksManager {
       throw e;
     }
   }
-
-
 
   public getCompletedTasks(config: Config): TodoistTask[] {
     if (!config.todoist_api_key) {

@@ -119,4 +119,46 @@ describe("TodoistManager", () => {
     expect(mockApi.getCompletedTasks).toHaveBeenCalledWith(mockConfig);
     expect(result).toEqual(completedTasks);
   });
+
+  it('should find a task and return TaskDetails', () => {
+    const task = {
+      id: 'task-123',
+      content: 'Test Task',
+      description: 'gmail_thread_id: thread-123',
+      updated_at: '',
+      due: { date: '2023-01-01', string: '2023-01-01', lang: 'en', is_recurring: false },
+      priority: 1
+    };
+    mockApi.getTasks.mockReturnValue([task]);
+    const result = manager.findTask('thread-123', mockConfig);
+    expect(result).toEqual({
+      id: 'task-123',
+      title: 'Test Task',
+      notes: 'gmail_thread_id: thread-123',
+      status: 'needsAction',
+      due_date: '2023-01-01',
+      priority: '1'
+    });
+  });
+
+  it('should find a completed task and return TaskDetails', () => {
+    const task = {
+      id: 'task-123',
+      content: 'Test Task',
+      description: 'gmail_thread_id: thread-123',
+      updated_at: '',
+      due: { date: '2023-01-01', string: '2023-01-01', lang: 'en', is_recurring: false },
+      priority: 1
+    };
+    mockApi.getCompletedTasks.mockReturnValue([task]);
+    const result = manager.findCompletedTask('thread-123', mockConfig);
+    expect(result).toEqual({
+      id: 'task-123',
+      title: 'Test Task',
+      notes: 'gmail_thread_id: thread-123',
+      status: 'completed',
+      due_date: '2023-01-01',
+      priority: '1'
+    });
+  });
 });

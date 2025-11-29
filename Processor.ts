@@ -78,7 +78,7 @@ export class Processor {
 
       const threadsWithContext = allThreads.map(thread => {
         const existingTask = tasksManager.findTask(thread.getId(), config);
-        return { thread, existingTask };
+        return { thread, existingTask: existingTask || undefined };
       });
 
       const plans = AIAnalyzer.generatePlans(threadsWithContext, aiContext, config);

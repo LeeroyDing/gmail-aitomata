@@ -12,4 +12,11 @@ export interface TodoistTask {
   content: string;
   description: string;
   updated_at: string;
+  due?: {
+    date: string;
+    string: string;
+    lang: string;
+    is_recurring: boolean;
+  };
+  priority?: number;
 }

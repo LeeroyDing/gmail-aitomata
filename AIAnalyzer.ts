@@ -42,11 +42,11 @@ export interface AIParsedResponse extends PlanOfAction {
   // that are not part of the "plan of action" itself.
 }
 
-export interface ExistingTask {
-  title: string;
-  notes: string;
-  status: 'needsAction' | 'completed';
-}
+import { TaskDetails } from "./TasksManager";
+
+// ...
+
+export type ExistingTask = TaskDetails;
 
 export class AIAnalyzer {
   /**

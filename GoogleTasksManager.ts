@@ -1,6 +1,6 @@
 
 import { Config } from './Config';
-import { Task, TasksManager } from './TasksManager';
+import { Task, TasksManager, TaskDetails } from './TasksManager';
 
 export class GoogleTasksManager implements TasksManager {
   public upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config, permalink: string): string | null {
@@ -37,20 +37,32 @@ gmail_thread_id: ${threadId}`
     return null;
   }
 
-  public findTask(threadId: string, config: Config): any | null {
+  public findTask(threadId: string, config: Config): TaskDetails | null {
     const taskListId = this.getTaskListId(config.default_task_list_name);
     if (!taskListId) {
       return null;
     }
-    return this.findTaskByThreadId(taskListId, threadId);
+    const task = this.findTaskByThreadId(taskListId, threadId);
+    return task ? this.normalizeTask(task) : null;
   }
 
-  public findCompletedTask(threadId: string, config: Config): any | null {
+  public findCompletedTask(threadId: string, config: Config): TaskDetails | null {
     const taskListId = this.getTaskListId(config.default_task_list_name);
     if (!taskListId) {
       return null;
     }
-    return this.findTaskByThreadId(taskListId, threadId, true);
+    const task = this.findTaskByThreadId(taskListId, threadId, true);
+    return task ? this.normalizeTask(task) : null;
+  }
+
+  private normalizeTask(task: GoogleAppsScript.Tasks.Schema.Task): TaskDetails {
+    return {
+      id: task.id || '',
+      title: task.title || '',
+      notes: task.notes || '',
+      due_date: task.due ? task.due.substring(0, 10) : undefined,
+      status: task.status === 'completed' ? 'completed' : 'needsAction'
+    };
   }
 
   private findTaskByThreadId(taskListId: string, threadId: string, completedOnly: boolean = false): GoogleAppsScript.Tasks.Schema.Task | null {
@@ -111,7 +123,6 @@ gmail_thread_id: ${threadId}`
    * @param config The configuration object.
    * @returns The 'updated' timestamp of the latest task as an ISO 8601 string, or null if no tasks are found.
    */
-
   public findCheckpoint(threadId: string, config: Config): string | null {
     const taskListId = this.getTaskListId(config.default_task_list_name);
     if (!taskListId) {

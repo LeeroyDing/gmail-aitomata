@@ -97,27 +97,10 @@ export class FeedbackManager {
                 }
 
                 // Normalize current task data
-                // Google Tasks and Todoist have different structures, but we expect them to roughly match our Task interface
-                // or we need to adapt.
-                // Since tasksManager.findTask returns 'any', we need to be careful.
-
-                let currentTitle = "";
-                let currentDueDate = "";
-                let currentPriority = "";
-
-                if (config.task_service === 'Todoist') {
-                    // TodoistTask
-                    currentTitle = currentTask.content;
-                    currentDueDate = currentTask.due ? currentTask.due.date : "";
-                    currentPriority = currentTask.priority ? String(currentTask.priority) : "";
-                } else {
-                    // Google Task
-                    currentTitle = currentTask.title;
-                    currentDueDate = currentTask.due ? currentTask.due.substring(0, 10) : ""; // YYYY-MM-DD
-                    // Google Tasks API doesn't strictly have priority in the same way, usually position.
-                    // But our Task interface has it. If GoogleTasksManager doesn't support it, it might be undefined.
-                    currentPriority = ""; // Google Tasks doesn't really have priority field exposed easily in standard API same as Todoist
-                }
+                // Now tasksManager.findTask returns TaskDetails, so we can use it directly.
+                const currentTitle = currentTask.title;
+                const currentDueDate = currentTask.due_date || "";
+                const currentPriority = currentTask.priority || "";
 
                 const hasTitleChanged = currentTitle !== originalTitle;
                 const hasDateChanged = currentDueDate !== originalDueDate;

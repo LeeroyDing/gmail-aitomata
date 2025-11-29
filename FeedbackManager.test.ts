@@ -122,9 +122,12 @@ describe('FeedbackManager', () => {
 
             // Mock current task state (Changed Title)
             (mockTasksManager.findTask as jest.Mock).mockReturnValue({
-                content: 'New Title', // Todoist field
-                due: { date: '2023-01-01' },
-                priority: 1,
+                id: 'task-1',
+                title: 'New Title',
+                notes: 'Notes',
+                due_date: '2023-01-01',
+                priority: '1',
+                status: 'needsAction'
             });
 
             // Mock AI generation
@@ -189,7 +192,14 @@ describe('FeedbackManager', () => {
             // Task not found in active
             (mockTasksManager.findTask as jest.Mock).mockReturnValue(null);
             // Task found in completed
-            (mockTasksManager.findCompletedTask as jest.Mock).mockReturnValue({ id: 'task-1', status: 'completed' });
+            (mockTasksManager.findCompletedTask as jest.Mock).mockReturnValue({
+                id: 'task-1',
+                title: 'Original Title',
+                notes: 'Notes',
+                due_date: '2023-01-01',
+                priority: '1',
+                status: 'completed'
+            });
 
             FeedbackManager.analyzeFeedback(mockTasksManager, config);
 
@@ -232,9 +242,12 @@ describe('FeedbackManager', () => {
             ]);
 
             (mockTasksManager.findTask as jest.Mock).mockReturnValue({
-                content: 'Same Title',
-                due: { date: '2023-01-01' },
-                priority: 1,
+                id: 'task-1',
+                title: 'Same Title',
+                notes: 'Notes',
+                due_date: '2023-01-01',
+                priority: '1',
+                status: 'needsAction'
             });
 
             FeedbackManager.analyzeFeedback(mockTasksManager, config);
