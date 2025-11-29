@@ -149,7 +149,7 @@ describe('FeedbackManager', () => {
             expect(mockRange.setValue).toHaveBeenCalledWith('New Title');
         });
 
-        it('should handle deleted tasks (stop tracking)', () => {
+        it('should handle deleted tasks (generate learning and stop tracking)', () => {
             mockRange.getDisplayValues.mockReturnValue([
                 ['ThreadID', 'TaskID', 'OriginalTitle', 'OriginalDueDate', 'OriginalPriority', 'CreatedAt'],
                 ['thread-1', 'task-1', 'Original Title', '2023-01-01', '1', '2023-01-01T00:00:00Z'],
@@ -158,8 +158,24 @@ describe('FeedbackManager', () => {
             // Task not found
             (mockTasksManager.findTask as jest.Mock).mockReturnValue(null);
 
+            // Mock AI generation
+            (AIAnalyzer.generateLearning as jest.Mock).mockReturnValue('Do not create tasks for this type of email');
+
             FeedbackManager.analyzeFeedback(mockTasksManager, config);
 
+            // Verify AI called with DELETED
+            expect(AIAnalyzer.generateLearning).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    original: { title: 'Original Title', due_date: '2023-01-01', priority: '1' },
+                    current: 'DELETED',
+                }),
+                config
+            );
+
+            // Verify learning recorded
+            expect(mockSheet.appendRow).toHaveBeenCalledWith(['Do not create tasks for this type of email', '100', 'task-1', '0']);
+
+            // Verify row deleted
             expect(mockSheet.deleteRow).toHaveBeenCalledWith(2); // Row 2 (1-based)
         });
 

@@ -304,10 +304,15 @@ export class AIAnalyzer {
    * Generates a learning rule based on the difference between the AI's original plan and the user's final action.
    */
   public static generateLearning(diff: any, config: Config): string | null {
+    const isDeletion = diff.current === 'DELETED';
+
     const prompt = `
       **SYSTEM PROMPT:**
       You are an AI analyzing your own mistakes.
-      I created a task based on an email, but the user modified it.
+      ${isDeletion
+        ? "I created a task based on an email, but the user DELETED it. This means I should NOT have created a task for this type of email."
+        : "I created a task based on an email, but the user modified it."}
+      
       Analyze the difference and generate a *general rule* that I should follow in the future to avoid this mistake.
       The rule should be concise and actionable.
 
@@ -317,12 +322,17 @@ export class AIAnalyzer {
       Priority: ${diff.original.priority}
 
       **USER CORRECTION:**
+      ${isDeletion ? "DELETED (Do not create task)" : `
       Title: ${diff.current.title}
       Due Date: ${diff.current.due_date}
       Priority: ${diff.current.priority}
+      `}
 
       **YOUR TASK:**
-      If the change represents a consistent preference (e.g., "Always set 'Newsletter' priority to 4"), return that rule.
+      ${isDeletion
+        ? "Generate a rule specifying when NOT to create tasks (e.g., 'Do not create tasks for newsletter emails')."
+        : "If the change represents a consistent preference (e.g., 'Always set 'Newsletter' priority to 4'), return that rule."}
+      
       If the change seems one-off or random, return "NULL".
       Return ONLY the rule text or "NULL".
     `;

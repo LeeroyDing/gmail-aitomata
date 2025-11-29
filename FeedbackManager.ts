@@ -69,10 +69,19 @@ export class FeedbackManager {
                 const currentTask = tasksManager.findTask(threadId, config);
 
                 if (!currentTask) {
-                    // Task might be deleted or completed and archived.
-                    // For now, if we can't find it, we assume it's done/gone and stop tracking it to keep sheet small.
-                    // Or we could check completed tasks if supported.
-                    // Let's assume if not found, we stop tracking.
+                    // Task deleted or archived. Treat as negative feedback.
+                    console.log(`Task ${taskId} not found (deleted). Generating learning...`);
+
+                    const diff = {
+                        original: { title: originalTitle, due_date: originalDueDate, priority: originalPriority },
+                        current: 'DELETED'
+                    };
+
+                    const learning = AIAnalyzer.generateLearning(diff, config);
+                    if (learning) {
+                        this.recordLearning(learning, taskId);
+                    }
+
                     rowsToDelete.push(i + 2); // +2 because 1-based and header
                     continue;
                 }
