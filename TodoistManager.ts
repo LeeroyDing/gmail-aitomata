@@ -1,6 +1,6 @@
 
 import { Config } from "./Config";
-import { Task, TasksManager } from "./TasksManager";
+import { Task, TasksManager, TaskDetails } from "./TasksManager";
 import { TodoistApi } from "./TodoistApi";
 import { NewTaskPayload, TodoistTask } from "./types/todoist";
 
@@ -27,7 +27,7 @@ export class TodoistManager implements TasksManager {
     task: Task,
     config: Config,
     permalink: string
-  ): boolean {
+  ): string | null {
     const threadId = thread.getId();
     const existingTasks = this.findTaskByThreadId(threadId, config);
 
@@ -37,7 +37,7 @@ export class TodoistManager implements TasksManager {
 [View in Gmail](${permalink})
 
 -----\n\n${GMAIL_THREAD_ID_MARKER}${threadId}`;
-    
+
     const taskPayload: NewTaskPayload = {
       content,
       description,
@@ -52,11 +52,12 @@ export class TodoistManager implements TasksManager {
         }
         const existingTask = existingTasks[0];
         this.api.updateTask(existingTask.id, taskPayload, config);
+        return existingTask.id;
       } else {
         taskPayload.project_id = config.todoist_project_id;
-        this.api.createTask(taskPayload, config);
+        const created = this.api.createTask(taskPayload, config);
+        return created.id;
       }
-      return true;
     } catch (e) {
       const errorMessage = (e instanceof Error) ? e.message : String(e);
       console.error(`Todoist API error in upsertTask for thread ${threadId}. Error: ${errorMessage}`);
@@ -64,13 +65,34 @@ export class TodoistManager implements TasksManager {
     }
   }
 
-
-  public findTask(threadId: string, config: Config): TodoistTask | null {
+  public findTask(threadId: string, config: Config): TaskDetails | null {
     const tasks = this.findTaskByThreadId(threadId, config);
     if (tasks.length > 0) {
-      return tasks[0];
+      return this.normalizeTask(tasks[0], 'needsAction');
     }
     return null;
+  }
+
+  public findCompletedTask(threadId: string, config: Config): TaskDetails | null {
+    const tasks = this.getCompletedTasks(config);
+    const sanitizedThreadId = threadId.replace(/"/g, '');
+    const marker = `${GMAIL_THREAD_ID_MARKER}${sanitizedThreadId}`;
+
+    // Todoist getCompletedTasks returns all completed tasks (limit might apply).
+    // We filter locally.
+    const found = tasks.find(t => t.content.includes(marker) || t.description?.includes(marker));
+    return found ? this.normalizeTask(found, 'completed') : null;
+  }
+
+  private normalizeTask(task: TodoistTask, status: 'needsAction' | 'completed'): TaskDetails {
+    return {
+      id: task.id,
+      title: task.content,
+      notes: task.description || '',
+      due_date: task.due ? task.due.date : undefined,
+      priority: task.priority ? String(task.priority) : undefined,
+      status: status
+    };
   }
 
   private findTaskByThreadId(threadId: string, config: Config): TodoistTask[] {
@@ -79,7 +101,7 @@ export class TodoistManager implements TasksManager {
       return [];
     }
     try {
-      const sanitizedThreadId = threadId.replace(/"/g, ''); 
+      const sanitizedThreadId = threadId.replace(/"/g, '');
       const filter = `search: "${GMAIL_THREAD_ID_MARKER}${sanitizedThreadId}"`;
       const tasks = this.api.getTasks(config, filter);
       return tasks;
@@ -100,20 +122,6 @@ export class TodoistManager implements TasksManager {
     } catch (e) {
       const errorMessage = (e instanceof Error) ? e.message : String(e);
       console.error(`Todoist API error in reopenTask for task ${taskId}. Error: ${errorMessage}`);
-      throw e;
-    }
-  }
-
-  public getCompletedTasks(config: Config): TodoistTask[] {
-    if (!config.todoist_api_key) {
-      console.warn('Todoist API key is not configured.');
-      return [];
-    }
-    try {
-      return this.api.getCompletedTasks(config);
-    } catch (e) {
-      const errorMessage = (e instanceof Error) ? e.message : String(e);
-      console.error(`Exception fetching completed tasks from Todoist: ${errorMessage}`);
       throw e;
     }
   }

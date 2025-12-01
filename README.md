@@ -1,72 +1,65 @@
 # Gmail Automata
 
-[![Test and deploy on main branch](https://github.com/LeeroyDing/gmail-aitomata/actions/workflows/main.yml/badge.svg)](https://github.com/LeeroyDing/gmail-aitomata/actions/workflows/main.yml)
+**Your Inbox, Automated.**
 
-## Introduction
+Gmail Automata turns your chaotic inbox into a structured, prioritized task list in **Todoist** or **Google Tasks**. It uses AI to read your emails, understand what needs to be done, and creates tasks for you.
 
-Gmail Automata is an AI-powered assistant that helps you manage your inbox by automatically creating tasks in your preferred task management service (Google Tasks or Todoist) for every email you receive. It uses a powerful language model to summarize emails and create meaningful tasks, saving you time and ensuring you never miss an important action item.
+## How It Works
 
-The script works by labeling all incoming emails as "unprocessed." It then runs automatically every 5 minutes, scanning for these emails, generating a task with an AI-powered summary, and then marking the email as "processed."
+1.  **Emails arrive** in your inbox.
+2.  **AI analyzes them** every 5 minutes.
+3.  **Tasks appear** in your Task Manager (Todoist/Google Tasks) with a summary, priority, and due date.
+4.  **You process the tasks** (complete, reschedule, rename).
+5.  **AI learns from you** The system watches your edits (renames, due date changes, deletions) to get smarter over time.
 
-A key feature of this script is its ability to track conversations. If you receive new messages in a thread that already has a task, the script will update the existing task with a summary of the new messages. This ensures that your task always has the latest context from the email conversation.
+## The Workflow (How to use this)
 
-If any error occurs during the process, the email is moved to your inbox and labeled as "error," so you can easily identify and address any issues.
+**Stop checking your email constantly.** Instead, live in your Task Manager.
 
-## Setup
+### 1. The "Triage" Phase
+Open your Task Manager. You will see new tasks created from your emails.
+*   **If the AI got it right:** Great! Just do the task and check it off.
+*   **If the AI got the date wrong:** Change the due date. *The AI will learn from this.*
+*   **If the AI got the title wrong:** Rename it. *The AI will learn from this.*
+*   **If it's not a task:** Delete it.
 
-1.  **Clone the Spreadsheet:** Make a copy of this [spreadsheet](https://docs.google.com/spreadsheets/d/1zC1ETBSEC5O3ihQgGvbSF3nbYuRrH66AxNEGwKs84k8/edit?gid=1898431028#gid=1898431028). You'll need to grant permissions for the script to access your Gmail and Tasks.
-2.  **Configure Your Assistant:**
-    *   Create a new sheet named `AI_Context` and add two columns: `Category` and `Guideline`. Populate this sheet with your personal context to help the AI understand your priorities.
-    *   In the `configs` sheet, configure the following settings:
-        *   `task_service`: Set to either "Google Tasks" or "Todoist".
-        *   `GEMINI_API_KEY`: Your API key for the Generative Language API (for Gemini).
-        *   `gemini_model`: The specific Gemini model to use (e.g., "gemini-pro", "gemini-2.5-flash"). Defaults to "gemini-2.5-flash".
-        *   If using Google Tasks:
-            *   `default_task_list_name`: The name of your target Google Task list (e.g., "My Tasks").
-        *   If using Todoist:
-            *   `todoist_api_key`: Your Todoist API key.
-            *   `todoist_project_id`: The ID of your target Todoist project.
-3.  **Enable APIs:** In the Google Cloud Platform project associated with your script, enable the **Google Tasks API** and the **Generative Language API (for Gemini)**.
-4.  **Set Up Gmail:**
-    *   Create a label named `unprocessed` in Gmail.
-    *   Set up Gmail filters to automatically label new emails as `unprocessed` and archive them.
-5.  **Start Processing:**
-    *   To test the setup, manually add a few emails to the `unprocessed` label and run the script by clicking **Gmail Automata > Process now**.
-    *   Once you're satisfied, start automatic processing by clicking **Gmail Automata > Start auto processing**.
+### 2. The "Action" Phase
+Work through your tasks as you normally would. The original email is always linked in the task notes if you need to reply.
 
-## Customization
+### 4. The "Missed Task" Scenario
+If the AI *fails* to create a task for an important email:
+1.  Go to Gmail.
+2.  Apply the label `aitomata/force`.
+3.  The system will force-create a task and *learn from this mistake*.
 
-You can customize the script's behavior by editing the `configs` sheet. For detailed explanations of each setting, see the notes in the sheet's headers.
+## Setup Guide
 
-## Upgrading
+### Prerequisites
+*   A Google Cloud Project with **Google Tasks API** and **Generative Language API** enabled.
+*   A copy of the [Configuration Spreadsheet](https://docs.google.com/spreadsheets/d/1zC1ETBSEC5O3ihQgGvbSF3nbYuRrH66AxNEGwKs84k8/edit?gid=1898431028#gid=1898431028).
 
-You can upgrade to the latest version by either forking the spreadsheet again or by deploying the latest code from the repository.
+### Configuration
+1.  **Spreadsheet Setup**:
+    *   **`configs` sheet**: Enter your API keys and choose your Task Service (Todoist or Google Tasks).
+    *   **`AI_Context` sheet**: (Optional) Write down general rules like "I am a software engineer" or "Prioritize emails from my boss".
+2.  **Gmail Setup**:
+    *   Create a label called `unprocessed`.
+    *   Create a filter to apply `unprocessed` to incoming emails (skip the inbox if you're brave!).
+3.  **Automatic Sheets**:
+    *   **`Task_Tracker`**: Created automatically to track active tasks for feedback analysis. **Do not edit manually.**
+    *   **`AI_Learnings`**: Created automatically to store rules generated from your corrections. You can review and edit these rules to fine-tune the AI.
 
-## Dev Setup
+## Development
 
-**Note:** This project uses Yarn as its official package manager. Please ensure you have Yarn installed and use it for all dependency management.
+### Installation
+```bash
+git clone https://github.com/LeeroyDing/gmail-aitomata.git
+cd gmail-aitomata
+yarn install
+```
 
-1.  Install Node.js and Yarn.
-2.  Clone the repository and install dependencies:
-    ```bash
-    git clone https://github.com/ranmocy/gmail-automata.git
-    cd gmail-automata
-    yarn install
-    ```
-
-## Deploy
-
-1.  Set up your local development environment.
-2.  Create a `.clasp.json` file and add your script ID.
-3.  Log in to `clasp` and deploy the latest version:
-    ```bash
-    yarn claspLogin
-    yarn deploy
-    ```
-
-## Changelog
-
-*   **2024-07-01:** Added Todoist support, improved logging, and made the script more robust.
-*   **2024-06-29:** Migrated to an AI-powered, task-oriented workflow.
-*   **2020-01-10:** First Google internal beta version.
-*   **2019-04-04:** First early adopter alpha version.
+### Deploy
+```bash
+yarn claspLogin
+yarn deploy
+```

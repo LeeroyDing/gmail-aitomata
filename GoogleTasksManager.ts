@@ -1,13 +1,13 @@
 
 import { Config } from './Config';
-import { Task, TasksManager } from './TasksManager';
+import { Task, TasksManager, TaskDetails } from './TasksManager';
 
 export class GoogleTasksManager implements TasksManager {
-  public upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config, permalink: string): boolean {
+  public upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config, permalink: string): string | null {
     const threadId = thread.getId();
     const taskListId = this.getTaskListId(config.default_task_list_name);
     if (!taskListId) {
-      return false;
+      return null;
     }
 
     const existingTask = this.findTaskByThreadId(taskListId, threadId);
@@ -17,37 +17,65 @@ export class GoogleTasksManager implements TasksManager {
       // Update existing task
       const updatedTask = { ...existingTask, ...taskWithoutPriority };
       if (Tasks && Tasks.Tasks) {
-        Tasks.Tasks.update(updatedTask, taskListId, existingTask.id);
+        const updated = Tasks.Tasks.update(updatedTask, taskListId, existingTask.id);
+        return updated.id ?? null;
       }
     } else {
       // Create new task
-      const newTask = { ...taskWithoutPriority, notes: `${task.notes}
+      const newTask = {
+        ...taskWithoutPriority, notes: `${task.notes}
 
 Link to email: ${permalink}
 
-gmail_thread_id: ${threadId}` };
+gmail_thread_id: ${threadId}`
+      };
       if (Tasks && Tasks.Tasks) {
-        Tasks.Tasks.insert(newTask, taskListId);
+        const created = Tasks.Tasks.insert(newTask, taskListId);
+        return created.id ?? null;
       }
     }
-    return true;
+    return null;
   }
 
-  public findTask(threadId: string, config: Config): any | null {
+  public findTask(threadId: string, config: Config): TaskDetails | null {
     const taskListId = this.getTaskListId(config.default_task_list_name);
     if (!taskListId) {
       return null;
     }
-    return this.findTaskByThreadId(taskListId, threadId);
+    const task = this.findTaskByThreadId(taskListId, threadId);
+    return task ? this.normalizeTask(task) : null;
   }
 
-  private findTaskByThreadId(taskListId: string, threadId: string): GoogleAppsScript.Tasks.Schema.Task | null {
+  public findCompletedTask(threadId: string, config: Config): TaskDetails | null {
+    const taskListId = this.getTaskListId(config.default_task_list_name);
+    if (!taskListId) {
+      return null;
+    }
+    const task = this.findTaskByThreadId(taskListId, threadId, true);
+    return task ? this.normalizeTask(task) : null;
+  }
+
+  private normalizeTask(task: GoogleAppsScript.Tasks.Schema.Task): TaskDetails {
+    return {
+      id: task.id || '',
+      title: task.title || '',
+      notes: task.notes || '',
+      due_date: task.due ? task.due.substring(0, 10) : undefined,
+      status: task.status === 'completed' ? 'completed' : 'needsAction'
+    };
+  }
+
+  private findTaskByThreadId(taskListId: string, threadId: string, completedOnly: boolean = false): GoogleAppsScript.Tasks.Schema.Task | null {
     if (Tasks && Tasks.Tasks) {
-      const tasks = Tasks.Tasks.list(taskListId);
+      const tasks = Tasks.Tasks.list(taskListId, { showCompleted: true, showHidden: true });
       if (tasks.items) {
         for (const task of tasks.items) {
           if (task.notes && task.notes.includes(`gmail_thread_id: ${threadId}`)) {
-            return task;
+            if (completedOnly) {
+              if (task.status === 'completed') return task;
+            } else {
+              if (task.status !== 'completed') return task;
+            }
           }
         }
       }
@@ -68,7 +96,6 @@ gmail_thread_id: ${threadId}` };
     }
     return null;
   }
-
 
   public reopenTask(taskId: string, config: Config): boolean {
     const taskListId = this.getTaskListId(config.default_task_list_name);
@@ -96,7 +123,6 @@ gmail_thread_id: ${threadId}` };
    * @param config The configuration object.
    * @returns The 'updated' timestamp of the latest task as an ISO 8601 string, or null if no tasks are found.
    */
-
   public findCheckpoint(threadId: string, config: Config): string | null {
     const taskListId = this.getTaskListId(config.default_task_list_name);
     if (!taskListId) {

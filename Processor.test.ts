@@ -6,6 +6,9 @@ import { AIAnalyzer } from './AIAnalyzer';
 import { Config } from './Config';
 import { GoogleTasksManager } from './GoogleTasksManager';
 import { TodoistManager } from './TodoistManager';
+import { FeedbackManager } from './FeedbackManager';
+
+jest.mock('./FeedbackManager');
 
 jest.mock('./AIAnalyzer');
 jest.mock('./GoogleTasksManager');
@@ -26,7 +29,7 @@ global.LockService = {
 } as any;
 
 describe('Processor Tests', () => {
-  
+
   let mockTasksManager: any;
   let mockConfig: Partial<Config>;
 
@@ -41,12 +44,13 @@ describe('Processor Tests', () => {
       processing_failed_label: 'error',
       max_threads: 50,
       task_service: 'Google Tasks',
+      force_task_label: 'aitomata/force',
     };
     (Config.getConfig as jest.Mock).mockReturnValue(mockConfig);
 
     mockTasksManager = {
       findTask: jest.fn().mockReturnValue(null),
-      upsertTask: jest.fn().mockReturnValue(true),
+      upsertTask: jest.fn().mockReturnValue('task-id'),
       reopenTask: jest.fn().mockReturnValue(true),
     };
 
@@ -60,6 +64,7 @@ describe('Processor Tests', () => {
       getUserLabelByName: jest.fn((name: string) => {
         if (name === 'unprocessed') return unprocessedLabel as any;
         if (name === 'processed') return processedLabel as any;
+        if (name === 'aitomata/force') return { getThreads: jest.fn().mockReturnValue([]) } as any;
         return { getName: () => name } as any;
       }),
     } as any;
@@ -78,6 +83,7 @@ describe('Processor Tests', () => {
     Processor.processAllUnprocessedThreads();
 
     expect(mockTasksManager.upsertTask).toHaveBeenCalledWith(mockThread, mockPlan.task, expect.any(Object), expect.any(String));
+    expect(FeedbackManager.recordTaskCreation).toHaveBeenCalledWith(mockThread.getId(), 'task-id', mockPlan.task);
     expect(mockThread.markRead).toHaveBeenCalled();
     expect(mockThread.removeLabel).toHaveBeenCalled();
     expect(mockThread.addLabel).toHaveBeenCalled();
@@ -97,6 +103,12 @@ describe('Processor Tests', () => {
     Processor.processAllUnprocessedThreads();
 
     expect(mockTasksManager.upsertTask).toHaveBeenCalledWith(mockThread, mockPlan.task, expect.any(Object), expect.any(String));
+    // Note: UPDATE_TASK does not currently trigger recordTaskCreation in the implementation, only CREATE_TASK and REOPEN_AND_UPDATE_TASK (if new task created)
+    // Wait, let's check Processor.ts.
+    // case 'UPDATE_TASK': if (plan.task) { taskId = upsertTask... if (taskId) { recordTaskCreation... } }
+    // So it SHOULD be called if upsertTask returns an ID.
+    // In the test setup, upsertTask returns 'task-id'.
+    expect(FeedbackManager.recordTaskCreation).toHaveBeenCalledWith(mockThread.getId(), 'task-id', mockPlan.task);
     expect(mockThread.markRead).toHaveBeenCalled();
   });
 
@@ -115,6 +127,7 @@ describe('Processor Tests', () => {
 
     expect(mockTasksManager.reopenTask).toHaveBeenCalledWith('task-123', expect.any(Object));
     expect(mockTasksManager.upsertTask).toHaveBeenCalledWith(mockThread, mockPlan.task, expect.any(Object), expect.any(String));
+    expect(FeedbackManager.recordTaskCreation).toHaveBeenCalledWith(mockThread.getId(), 'task-id', mockPlan.task);
     expect(mockThread.markRead).toHaveBeenCalled();
   });
 

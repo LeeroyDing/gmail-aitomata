@@ -9,9 +9,19 @@ export interface Task {
   status?: 'needsAction' | 'completed';
 }
 
+export interface TaskDetails {
+  id: string;
+  title: string;
+  notes: string;
+  due_date?: string;
+  priority?: string;
+  status?: 'needsAction' | 'completed';
+}
+
 export interface TasksManager {
-  upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config, permalink: string): boolean;
+  upsertTask(thread: GoogleAppsScript.Gmail.GmailThread, task: Task, config: Config, permalink: string): string | null;
   findCheckpoint(threadId: string, config: Config): string | null;
-  findTask(threadId: string, config: Config): any | null;
+  findTask(threadId: string, config: Config): TaskDetails | null;
+  findCompletedTask(threadId: string, config: Config): TaskDetails | null;
   reopenTask(taskId: string, config: Config): boolean;
 }

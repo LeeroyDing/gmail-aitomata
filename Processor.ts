@@ -18,6 +18,7 @@
 import { Config } from './Config';
 import { Stats } from './Stats';
 import { AIAnalyzer } from './AIAnalyzer';
+import { FeedbackManager } from './FeedbackManager';
 
 import { TasksManagerFactory } from './TasksManagerFactory';
 
@@ -51,26 +52,63 @@ export class Processor {
       }
 
       const unprocessedThreads = unprocessedLabel.getThreads(0, config.max_threads);
-      console.log(`Found ${unprocessedThreads.length} unprocessed threads.`);
-      if (unprocessedThreads.length === 0) {
+
+      // Handle Force Task Label
+      const forceLabel = GmailApp.getUserLabelByName(config.force_task_label);
+      let forcedThreads: GoogleAppsScript.Gmail.GmailThread[] = [];
+      if (forceLabel) {
+        forcedThreads = forceLabel.getThreads(0, config.max_threads);
+      }
+
+      // Combine and deduplicate
+      const allThreadsMap = new Map<string, GoogleAppsScript.Gmail.GmailThread>();
+      unprocessedThreads.forEach(t => allThreadsMap.set(t.getId(), t));
+      forcedThreads.forEach(t => allThreadsMap.set(t.getId(), t));
+
+      const allThreads = Array.from(allThreadsMap.values());
+
+      console.log(`Found ${allThreads.length} threads to process (${unprocessedThreads.length} unprocessed, ${forcedThreads.length} forced).`);
+
+      // 1. Analyze Feedback (Learn from user edits)
+      FeedbackManager.analyzeFeedback(tasksManager, config);
+
+      if (allThreads.length === 0) {
         return;
       }
 
-      const threadsWithContext = unprocessedThreads.map(thread => {
+      const threadsWithContext = allThreads.map(thread => {
         const existingTask = tasksManager.findTask(thread.getId(), config);
-        return { thread, existingTask };
+        return { thread, existingTask: existingTask || undefined };
       });
 
       const plans = AIAnalyzer.generatePlans(threadsWithContext, aiContext, config);
 
-      if (plans.length !== unprocessedThreads.length) {
-        throw new Error(`Mismatch between number of threads (${unprocessedThreads.length}) and plans received from AI (${plans.length}).`);
+      if (plans.length !== allThreads.length) {
+        throw new Error(`Mismatch between number of threads (${allThreads.length}) and plans received from AI (${plans.length}).`);
       }
 
       for (let i = 0; i < plans.length; i++) {
         const plan = plans[i];
-        const thread = unprocessedThreads[i];
+        const thread = allThreads[i];
         const threadId = thread.getId();
+
+        // Check if forced
+        const isForced = thread.getLabels().some(l => l.getName() === config.force_task_label);
+        if (isForced) {
+          console.log(`Thread ${threadId} is forced. Overriding action to CREATE_TASK.`);
+          plan.action = 'CREATE_TASK';
+          // If AI didn't generate a task object because it thought DO_NOTHING, we need to ensure one exists.
+          // But generatePlans usually returns a task object even for DO_NOTHING if we ask it nicely, or we might need to handle null task.
+          // The prompt says: "If the action is 'DO_NOTHING', the "task" object should be null."
+          // So if we force CREATE_TASK, we might have a null task.
+          // In that case, we should probably use a default task or ask AI again? 
+          // For now, let's assume the AI might have generated a task but decided DO_NOTHING.
+          // If task is null, we can't create it. We'll skip and log warning.
+          if (!plan.task) {
+            console.warn(`Forced thread ${threadId} has no task details from AI. Skipping.`);
+            continue;
+          }
+        }
 
         try {
           console.log(`Executing plan for thread ${threadId}: ${plan.action}`);
@@ -81,21 +119,33 @@ export class Processor {
             case 'CREATE_TASK':
             case 'UPDATE_TASK':
               if (plan.task) {
-                tasksManager.upsertTask(thread, plan.task, config, thread.getPermalink());
-                markRead = true;
+                const taskId = tasksManager.upsertTask(thread, plan.task, config, thread.getPermalink());
+                if (taskId) {
+                  FeedbackManager.recordTaskCreation(threadId, taskId, plan.task);
+                  markRead = true;
+                }
               }
               break;
             case 'REOPEN_AND_UPDATE_TASK':
               if (plan.task) {
-                const existingTask = tasksManager.findTask(threadId, config);
+                let existingTask = tasksManager.findTask(threadId, config);
+                if (!existingTask) {
+                  existingTask = tasksManager.findCompletedTask(threadId, config);
+                }
                 if (existingTask && existingTask.id) {
                   tasksManager.reopenTask(existingTask.id, config);
-                  tasksManager.upsertTask(thread, plan.task, config, thread.getPermalink());
-                  markRead = true;
+                  const taskId = tasksManager.upsertTask(thread, plan.task, config, thread.getPermalink());
+                  if (taskId) {
+                    FeedbackManager.recordTaskCreation(threadId, taskId, plan.task);
+                    markRead = true;
+                  }
                 } else {
                   console.log(`Could not find existing task to reopen for thread ${threadId}. Creating a new one instead.`);
-                  tasksManager.upsertTask(thread, plan.task, config, thread.getPermalink());
-                  markRead = true;
+                  const taskId = tasksManager.upsertTask(thread, plan.task, config, thread.getPermalink());
+                  if (taskId) {
+                    FeedbackManager.recordTaskCreation(threadId, taskId, plan.task);
+                    markRead = true;
+                  }
                 }
               }
               break;
@@ -108,6 +158,9 @@ export class Processor {
             thread.markRead();
           }
 
+          if (forceLabel) {
+            thread.removeLabel(forceLabel);
+          }
           thread.removeLabel(unprocessedLabel);
           if (processedLabel) {
             thread.addLabel(processedLabel);

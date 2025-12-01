@@ -15,6 +15,7 @@
  */
 
 import { Config } from "./Config";
+import { FeedbackManager } from "./FeedbackManager";
 
 /**
  * Defines the structure of the "Plan of Action" that the AI should return.
@@ -41,11 +42,11 @@ export interface AIParsedResponse extends PlanOfAction {
   // that are not part of the "plan of action" itself.
 }
 
-export interface ExistingTask {
-  title: string;
-  notes: string;
-  status: 'needsAction' | 'completed';
-}
+import { TaskDetails } from "./TasksManager";
+
+// ...
+
+export type ExistingTask = TaskDetails;
 
 export class AIAnalyzer {
   /**
@@ -69,7 +70,13 @@ export class AIAnalyzer {
       .slice(1)
       .map((row) => `| ${row[0]} | ${row[1]} |`)
       .join("\n");
-    return `${header}\n${separator}\n${context}`;
+    const contextString = `${header}\n${separator}\n${context}`;
+
+    const learnings = FeedbackManager.getLearnings();
+    if (learnings.length > 0) {
+      return `${contextString}\n\n**LEARNED RULES (High Confidence):**\n${learnings.map(l => `- ${l}`).join("\n")}`;
+    }
+    return contextString;
   }
 
   private static formatMessagesForAI(
@@ -217,7 +224,7 @@ export class AIAnalyzer {
                 description:
                   "Detailed notes about the task, in proper Markdown format. Especially two line breaks between paragraphs.",
                 example:
-`Discuss project details with Jane because she has been waiting for a response since last week.\n\n[Discussion Link](https://example.com/discussion)\n`,
+                  `Discuss project details with Jane because she has been waiting for a response since last week.\n\n[Discussion Link](https://example.com/discussion)\n`,
                 nullable: false,
               },
               due_date: {
@@ -290,5 +297,64 @@ export class AIAnalyzer {
     });
 
     return this.callAI(systemPrompt, config, responseSchema, userParts);
+  }
+
+
+  /**
+   * Generates a learning rule based on the difference between the AI's original plan and the user's final action.
+   */
+  public static generateLearning(diff: any, config: Config): string | null {
+    const isDeletion = diff.current === 'DELETED';
+
+    const prompt = `
+      **SYSTEM PROMPT:**
+      You are an AI analyzing your own mistakes.
+      ${isDeletion
+        ? "I created a task based on an email, but the user DELETED it. This means I should NOT have created a task for this type of email."
+        : "I created a task based on an email, but the user modified it."}
+      
+      Analyze the difference and generate a *general rule* that I should follow in the future to avoid this mistake.
+      The rule should be concise and actionable.
+
+      **ORIGINAL PLAN:**
+      Title: ${diff.original.title}
+      Due Date: ${diff.original.due_date}
+      Priority: ${diff.original.priority}
+
+      **USER CORRECTION:**
+      ${isDeletion ? "DELETED (Do not create task)" : `
+      Title: ${diff.current.title}
+      Due Date: ${diff.current.due_date}
+      Priority: ${diff.current.priority}
+      `}
+
+      **YOUR TASK:**
+      ${isDeletion
+        ? "Generate a rule specifying when NOT to create tasks (e.g., 'Do not create tasks for newsletter emails')."
+        : "If the change represents a consistent preference (e.g., 'Always set 'Newsletter' priority to 4'), return that rule."}
+      
+      If the change seems one-off or random, return "NULL".
+      Return ONLY the rule text or "NULL".
+    `;
+
+    const responseSchema = {
+      type: "STRING",
+      description: "The learned rule or NULL."
+    };
+
+    try {
+      // We reuse callAI but we need to adapt it because callAI expects userParts.
+      // Let's just make a simple call here or refactor callAI.
+      // For simplicity, let's construct the request manually or adapt callAI to be more flexible?
+      // callAI is private. Let's make it more flexible or just use it.
+      // callAI takes (prompt, config, responseSchema, userParts).
+      // We can pass empty userParts or put the prompt in userParts.
+
+      // Actually, callAI puts 'prompt' in system_instruction.
+      return this.callAI(prompt, config, responseSchema, [{ text: "Analyze this difference." }]);
+    } catch (e) {
+      console.error("Failed to generate learning:", e);
+      return null;
+    }
   }
 }
